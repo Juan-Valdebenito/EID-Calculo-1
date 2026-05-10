@@ -1,8 +1,8 @@
 from rut import validar_rut_detallado, obtener_digitos, calcular_v
 from conica import construir_ecuacion_detallado, clasificar_conica
-from transformaciones import forma_canonica
-from funciones import construir_funcion, analizar_limites
-from evidencia import tabla_valores
+from transformaciones import forma_canonica, ecuacion_general
+#from funciones import construir_funcion, analizar_limites
+#from evidencia import tabla_valores
 
 def main():
     rut = input("Ingrese RUT: ")
@@ -19,22 +19,22 @@ def main():
     A, B, C, D, E = construir_ecuacion_detallado(d, v)
 
     print("\nEcuación general:")
-    print(f"{A}x² + {B}y² + ({C})x + ({D})y + {E} = 0")
+    print(ecuacion_general(A, B, C, D, E))
 
     tipo = clasificar_conica(A, B)
     print(f"\nTipo de conica: {tipo}")
 
     print("\n=== FORMA CANONICA ===")
-    forma_canonica(A, B, C, D, E)
+    forma_canonica(A, B, C, D, E, mostrar_elementos=False)
 
-    print("\n=== FUNCION POR TRAMOS ===")
-    construir_funcion(d)
+    # print("\n=== FUNCION POR TRAMOS ===")
+    # construir_funcion(d)
 
-    print("\n=== LIMITES ===")
-    analizar_limites(d)
+    # print("\n=== LIMITES ===")
+    # analizar_limites(d)
 
-    print("\n=== EVIDENCIA COMPUTACIONAL ===")
-    tabla_valores(d)
+    # print("\n=== EVIDENCIA COMPUTACIONAL ===")
+    # tabla_valores(d)
 
 
 if __name__ == "__main__":
