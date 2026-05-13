@@ -3,6 +3,11 @@ def limpiar_rut(rut):
 
 def validar_rut_detallado(rut):
     rut = limpiar_rut(rut)
+    if "-" not in rut:
+        print("Formato inválido")
+        return False
+
+    cuerpo, dv = rut.split("-")
     cuerpo, dv = rut.split("-")
 
     print("\n--- VALIDACION RUT ---")
