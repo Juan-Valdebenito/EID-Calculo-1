@@ -25,19 +25,20 @@ def raiz_aproximada(n):
     return x
 
 
-def graficar_conica(tipo, datos):
-    print("\nDATOS RECIBIDOS:")
-    print("Tipo:", tipo)
-    print(datos)
+# =====================================================
+# GRAFICAR CONICA
+# =====================================================
 
-    fig, ax = plt.subplots()
+def graficar_conica(tipo, datos):
+
+    fig, ax = plt.subplots(figsize=(7, 7))
 
     puntos_x = []
     puntos_y = []
 
-    # =========================
+    # =================================================
     # CIRCUNFERENCIA / ELIPSE
-    # =========================
+    # =================================================
 
     if tipo == "circunferencia" or tipo == "elipse":
 
@@ -45,6 +46,9 @@ def graficar_conica(tipo, datos):
         k = datos["k"]
         a2 = datos["a2"]
         b2 = datos["b2"]
+
+        if a2 <= 0 or b2 <= 0:
+            return fig
 
         inicio = h - raiz_aproximada(a2)
         fin = h + raiz_aproximada(a2)
@@ -59,17 +63,19 @@ def graficar_conica(tipo, datos):
 
                 y = raiz_aproximada(parte * b2)
 
-                puntos_x.append(x)
-                puntos_y.append(k + y)
+                if y is not None:
 
-                puntos_x.append(x)
-                puntos_y.append(k - y)
+                    puntos_x.append(x)
+                    puntos_y.append(k + y)
+
+                    puntos_x.append(x)
+                    puntos_y.append(k - y)
 
             x += 0.1
 
-    # =========================
-    # HIPÉRBOLA
-    # =========================
+    # =================================================
+    # HIPERBOLA
+    # =================================================
 
     elif tipo == "hipérbola":
 
@@ -79,11 +85,14 @@ def graficar_conica(tipo, datos):
         b2 = datos["b2"]
         orientacion = datos["orientacion"]
 
+        if a2 <= 0 or b2 <= 0:
+            return fig
+
         t = -20
 
         while t <= 20:
 
-            # HIPÉRBOLA HORIZONTAL
+            # HIPERBOLA HORIZONTAL
 
             if orientacion == "horizontal":
 
@@ -103,7 +112,7 @@ def graficar_conica(tipo, datos):
                         puntos_x.append(x)
                         puntos_y.append(k - y)
 
-            # HIPÉRBOLA VERTICAL
+            # HIPERBOLA VERTICAL
 
             else:
 
@@ -125,9 +134,9 @@ def graficar_conica(tipo, datos):
 
             t += 0.05
 
-    # =========================
-    # PARÁBOLA
-    # =========================
+    # =================================================
+    # PARABOLA
+    # =================================================
 
     elif tipo == "parábola":
 
@@ -136,11 +145,14 @@ def graficar_conica(tipo, datos):
         p = datos["p"]
         orientacion = datos["orientacion"]
 
+        if p == 0:
+            return fig
+
         t = -20
 
         while t <= 20:
 
-            # PARÁBOLA VERTICAL
+            # PARABOLA VERTICAL
 
             if orientacion == "vertical":
 
@@ -151,7 +163,7 @@ def graficar_conica(tipo, datos):
                 puntos_x.append(x)
                 puntos_y.append(y)
 
-            # PARÁBOLA HORIZONTAL
+            # PARABOLA HORIZONTAL
 
             else:
 
@@ -164,11 +176,20 @@ def graficar_conica(tipo, datos):
 
             t += 0.05
 
-    # =========================
+    # =================================================
+    # DIBUJAR
+    # =================================================
 
-    ax.plot(puntos_x, puntos_y, marker='.')
+    ax.plot(
+        puntos_x,
+        puntos_y,
+        marker='.',
+        linestyle='',
+        markersize=2
+    )
 
     ax.axhline(0)
+
     ax.axvline(0)
 
     ax.set_title(f"Gráfica de la {tipo}")
@@ -177,23 +198,36 @@ def graficar_conica(tipo, datos):
 
     ax.set_aspect('equal')
 
-    plt.show()
+    return fig
 
+
+# =====================================================
+# GRAFICAR DESDE ECUACION
+# =====================================================
 
 def graficar_desde_ecuacion(tipo, A, B, C, D, E):
 
-    # =========================
+    # =================================================
     # CIRCUNFERENCIA / ELIPSE
-    # =========================
+    # =================================================
 
     if tipo == "circunferencia" or tipo == "elipse":
 
+        if A == 0 or B == 0:
+            return None
+
         h = -C / (2 * A)
+
         k = -D / (2 * B)
 
-        constante = -E + (C ** 2) / (4 * A) + (D ** 2) / (4 * B)
+        constante = (
+            -E
+            + (C ** 2) / (4 * A)
+            + (D ** 2) / (4 * B)
+        )
 
         a2 = constante / A
+
         b2 = constante / B
 
         datos = {
@@ -203,29 +237,38 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
             "b2": valor_absoluto(b2)
         }
 
-        graficar_conica(tipo, datos)
+        return graficar_conica(tipo, datos)
 
-    # =========================
-    # HIPÉRBOLA
-    # =========================
+    # =================================================
+    # HIPERBOLA
+    # =================================================
 
     elif tipo == "hipérbola":
 
+        if A == 0 or B == 0:
+            return None
+
         h = -C / (2 * A)
+
         k = -D / (2 * B)
 
-        constante = -E + (C ** 2) / (4 * A) + (D ** 2) / (4 * B)
+        constante = (
+            -E
+            + (C ** 2) / (4 * A)
+            + (D ** 2) / (4 * B)
+        )
 
         if constante == 0:
 
-            print("No se puede graficar.")
-            return
+            return None
 
         a2 = valor_absoluto(constante / A)
+
         b2 = valor_absoluto(constante / B)
 
         if A > 0:
             orientacion = "horizontal"
+
         else:
             orientacion = "vertical"
 
@@ -237,17 +280,20 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
             "orientacion": orientacion
         }
 
-        graficar_conica(tipo, datos)
+        return graficar_conica(tipo, datos)
 
-    # =========================
-    # PARÁBOLA
-    # =========================
+    # =================================================
+    # PARABOLA
+    # =================================================
 
     elif tipo == "parábola":
 
-    # PARÁBOLA HORIZONTAL
+        # PARABOLA HORIZONTAL
 
         if A == 0:
+
+            if B == 0:
+                return None
 
             k = -D / (2 * B)
 
@@ -262,7 +308,7 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
                 "orientacion": "horizontal"
             }
 
-        # PARÁBOLA VERTICAL
+        # PARABOLA VERTICAL
 
         else:
 
@@ -279,4 +325,6 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
                 "orientacion": "vertical"
             }
 
-        graficar_conica(tipo, datos)
+        return graficar_conica(tipo, datos)
+
+    return None
