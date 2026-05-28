@@ -1,47 +1,20 @@
-from rut import validar_rut_detallado, obtener_digitos, calcular_v
-from conica import construir_ecuacion_detallado, clasificar_conica
-from transformaciones import forma_canonica, ecuacion_general
-from graficas import graficar_desde_ecuacion
-#from funciones import construir_funcion, analizar_limites
-#from evidencia import tabla_valores
+
+
+
+
+from interfaz import iniciar_app
+
 
 def main():
-    rut = input("Ingrese RUT: ")
 
-    valido = validar_rut_detallado(rut)
-    if not valido:
-        print(" RUT invalido")
-        return
+    print("====================================")
+    print(" PROYECTO EID - MAT1186 ")
+    print(" Secciones Cónicas y Límites ")
+    print("====================================")
 
-    d, dv = obtener_digitos(rut)
-    v = calcular_v(dv)
-
-    print("\n=== CONSTRUCCION DE ECUACION ===")
-    A, B, C, D, E = construir_ecuacion_detallado(d, v)
-
-    print("\nEcuación general:")
-    print(ecuacion_general(A, B, C, D, E))
-
-    tipo = clasificar_conica(A, B).lower()
-    print(f"\nTipo de conica: {tipo}")
-
-    print("\n=== FORMA CANONICA ===")
-    forma_canonica(A, B, C, D, E, mostrar_elementos=False)
-
-    print("\n=== GRAFICA ===")
-
-    graficar_desde_ecuacion(tipo, A, B, C, D, E)
-
-    # print("\n=== FUNCION POR TRAMOS ===")
-    # construir_funcion(d)
-
-    # print("\n=== LIMITES ===")
-    # analizar_limites(d)
-
-    # print("\n=== EVIDENCIA COMPUTACIONAL ===")
-    # tabla_valores(d)
+    iniciar_app()
 
 
 if __name__ == "__main__":
-    main()
 
+    main()
