@@ -15,6 +15,7 @@ from rut import calcular_v
 from conica import construir_ecuacion_detallado
 from conica import clasificar_conica
 
+import rut
 from transformaciones import ecuacion_general
 from transformaciones import forma_canonica
 
@@ -264,12 +265,28 @@ for campo in campos:
 def generar():
 
     rut = entrada_rut.get()
+    if rut.strip() == "":
 
-    if not validar_rut_detallado(rut):
+        resultado_texto.delete("1.0", tk.END)
 
-        messagebox.showerror(
-            "Error",
-            "RUT inválido"
+        resultado_texto.insert(
+            tk.END,
+            "====================================\n"
+        )
+
+        resultado_texto.insert(
+            tk.END,
+            " ERROR\n"
+        )
+
+        resultado_texto.insert(
+            tk.END,
+            "====================================\n\n"
+        )
+
+        resultado_texto.insert(
+            tk.END,
+            "Debe ingresar un RUT.\n"
         )
 
         return
@@ -290,6 +307,32 @@ def generar():
 
     d, dv = obtener_digitos(rut)
 
+    if d is None:
+
+        resultado_texto.delete("1.0", tk.END)
+
+        resultado_texto.insert(
+            tk.END,
+            "====================================\n"
+            )
+
+        resultado_texto.insert(
+            tk.END,
+            " ERROR\n"
+            )
+
+        resultado_texto.insert(
+            tk.END,
+            "====================================\n\n"
+            )
+
+        resultado_texto.insert(
+            tk.END,
+            "Formato de RUT inválido.\n"
+        )
+
+        return
+
     v = calcular_v(dv)
 
     A, B, C, D, E = construir_ecuacion_detallado(d, v)
@@ -301,39 +344,39 @@ def generar():
     # =================================================
 
     resultado_texto.insert(
-        tk.END,
-        "====================================\n"
-    )
+            tk.END,
+            "====================================\n"
+        )
 
     resultado_texto.insert(
-        tk.END,
-        " ECUACION GENERAL\n"
-    )
+            tk.END,
+            " ECUACION GENERAL\n"
+        )
 
     resultado_texto.insert(
-        tk.END,
-        "====================================\n\n"
-    )
+            tk.END,
+            "====================================\n\n"
+        )
 
     resultado_texto.insert(
-        tk.END,
-        ecuacion_general(A, B, C, D, E)
-    )
+            tk.END,
+            ecuacion_general(A, B, C, D, E)
+        )
 
     resultado_texto.insert(
-        tk.END,
-        f"\n\nTipo de cónica: {tipo}\n"
-    )
+            tk.END,
+            f"\n\nTipo de cónica: {tipo}\n"
+        )
 
     resultado_texto.insert(
-        tk.END,
-        "\n====================================\n"
-    )
+            tk.END,
+            "\n====================================\n"
+        )
 
     resultado_texto.insert(
-        tk.END,
-        " ANALISIS DE LIMITES\n"
-    )
+            tk.END,
+            " ANALISIS DE LIMITES\n"
+        )
 
     resultado_texto.insert(
         tk.END,
@@ -347,13 +390,13 @@ def generar():
     datos_funcion = construir_funcion(d)
 
     resultado_texto.insert(
-    tk.END,
-    f"\nTipo de discontinuidad: {datos_funcion['tipo']}\n"
+        tk.END,
+        f"\nTipo de discontinuidad: {datos_funcion['tipo']}\n"
     )
 
     resultado_texto.insert(
-    tk.END,
-    f"Punto de análisis: x = {datos_funcion['a']}\n"
+        tk.END,
+        f"Punto de análisis: x = {datos_funcion['a']}\n"
     )
 
     analizar_limites(d)
@@ -361,13 +404,13 @@ def generar():
     derecha = limite_derecha(datos_funcion)
 
     resultado_texto.insert(
-    tk.END,
-    f"\nLímite por izquierda: {izquierda}\n"
+        tk.END,
+        f"\nLímite por izquierda: {izquierda}\n"
     )
 
     resultado_texto.insert(
-    tk.END,
-    f"Límite por derecha: {derecha}\n"
+        tk.END,
+        f"Límite por derecha: {derecha}\n"
     )
     if izquierda == derecha:
 
@@ -414,6 +457,7 @@ def generar():
 
 
     tabla_datos = obtener_tabla(datos_funcion)
+
 
     for fila in tabla_datos:
 
@@ -469,18 +513,18 @@ def generar():
         pass
 
     canvas = FigureCanvasTkAgg(
-        fig,
-        master=frame_grafica
-    )
+            fig,
+            master=frame_grafica
+        )
 
     canvas.draw()
     plt.close(fig)
 
 
     canvas.get_tk_widget().pack(
-        fill="both",
-        expand=True
-    )
+            fill="both",
+            expand=True
+        )
 
 
 # =====================================================

@@ -79,10 +79,20 @@ def validar_rut_detallado(rut):
 
 
 def obtener_digitos(rut):
+
     rut = limpiar_rut(rut)
-    cuerpo, dv = rut.split("-")
+
+    partes = rut.split("-")
+
+    if len(partes) != 2:
+        return None, None
+
+    cuerpo, dv = partes
+
     cuerpo = cuerpo.zfill(8)
+
     return [int(x) for x in cuerpo], dv
+
 
 
 def calcular_v(dv):
