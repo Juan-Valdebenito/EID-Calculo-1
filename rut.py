@@ -2,13 +2,12 @@ def limpiar_rut(rut):
     return rut.replace(".", "").replace(" ", "").upper()
 
 def validar_rut_detallado(rut):
-    rut = limpiar_rut(rut)
-    if "-" not in rut:
-        print("Formato inválido")
-        return False
 
-    cuerpo, dv = rut.split("-")
-    cuerpo, dv = rut.split("-")
+    rut = limpiar_rut(rut)
+
+    if rut.strip() == "":
+        print("Error: Debe ingresar un RUT.")
+        return False
 
     print("\n--- VALIDACION RUT ---")
 
@@ -16,7 +15,13 @@ def validar_rut_detallado(rut):
         print("Formato inválido: falta el guion.")
         return False
 
-    cuerpo, dv = rut.split("-")
+    partes = rut.split("-")
+
+    if len(partes) != 2:
+        print("Formato inválido.")
+        return False
+
+    cuerpo, dv = partes
 
     if len(cuerpo) not in [7, 8] or not cuerpo.isdigit():
         print("Formato inválido: el cuerpo del RUT debe tener 7 u 8 dígitos.")
