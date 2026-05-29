@@ -124,19 +124,46 @@ entrada_rut.pack(pady=10)
 
 
 # =====================================================
+
 # RESULTADOS
+
 # =====================================================
 
-resultado_texto = tk.Text(
-    panel_izq,
-    width=55,
-    height=22,
-    bg="#151521",
-    fg="white",
-    font=("Consolas", 10)
+frame_resultados = tk.Frame(
+panel_izq,
+bg=COLOR_PANEL
 )
 
-resultado_texto.pack(pady=10)
+frame_resultados.pack(pady=10)
+
+resultado_texto = tk.Text(
+frame_resultados,
+width=55,
+height=15,
+bg="#151521",
+fg="white",
+font=("Consolas", 10)
+)
+
+resultado_texto.pack(
+side="left"
+)
+
+scroll_resultados = tk.Scrollbar(
+frame_resultados,
+command=resultado_texto.yview
+)
+
+scroll_resultados.pack(
+side="right",
+fill="y"
+)
+
+resultado_texto.config(
+yscrollcommand=scroll_resultados.set
+)
+
+
 
 
 # =====================================================
