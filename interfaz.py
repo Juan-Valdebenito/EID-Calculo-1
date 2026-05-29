@@ -1,10 +1,9 @@
-
-
-
-
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+from funciones import limite_izquierda
+from funciones import limite_derecha
+
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
@@ -311,7 +310,7 @@ def generar():
 
     resultado_texto.insert(
         tk.END,
-        "====================================\n"
+        "====================================\n\n"
     )
 
     # =================================================
@@ -320,7 +319,72 @@ def generar():
 
     datos_funcion = construir_funcion(d)
 
+    resultado_texto.insert(
+    tk.END,
+    f"\nTipo de discontinuidad: {datos_funcion['tipo']}\n"
+    )
+
+    resultado_texto.insert(
+    tk.END,
+    f"Punto de análisis: x = {datos_funcion['a']}\n"
+    )
+
     analizar_limites(d)
+    izquierda = limite_izquierda(datos_funcion)
+    derecha = limite_derecha(datos_funcion)
+
+    resultado_texto.insert(
+    tk.END,
+    f"\nLímite por izquierda: {izquierda}\n"
+    )
+
+    resultado_texto.insert(
+    tk.END,
+    f"Límite por derecha: {derecha}\n"
+    )
+    if izquierda == derecha:
+
+        resultado_texto.insert(
+            tk.END,
+            "\nEl límite existe.\n"
+        )
+    else:
+
+        resultado_texto.insert(
+            tk.END,
+            "\nEl límite no existe.\n"
+        )
+
+    if datos_funcion["tipo"] == "removible":
+
+        resultado_texto.insert(
+            tk.END,
+            "Discontinuidad removible.\n"
+        )
+
+    elif datos_funcion["tipo"] == "salto":
+
+        resultado_texto.insert(
+            tk.END,
+            "Discontinuidad de salto.\n"
+        )
+
+    elif datos_funcion["tipo"] == "infinita":
+
+        resultado_texto.insert(
+            tk.END,
+            "Discontinuidad infinita.\n"
+        )
+
+        resultado_texto.insert(
+            tk.END,
+            f"Asintota vertical: x = {datos_funcion['a']}\n"
+        )
+
+        
+
+
+
 
     tabla_datos = obtener_tabla(datos_funcion)
 
@@ -342,6 +406,8 @@ def generar():
     for widget in frame_grafica.winfo_children():
 
         widget.destroy()
+    
+    plt.close("all")
 
     fig = plt.figure(figsize=(7, 7))
 
@@ -381,6 +447,8 @@ def generar():
     )
 
     canvas.draw()
+    plt.close(fig)
+
 
     canvas.get_tk_widget().pack(
         fill="both",
@@ -422,4 +490,11 @@ footer.pack(side="bottom", pady=10)
 
 # =====================================================
 
-ventana.mainloop()
+try:
+
+    ventana.mainloop()
+
+except KeyboardInterrupt:
+
+    print("Programa finalizado.")
+
