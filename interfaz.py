@@ -131,40 +131,26 @@ entrada_rut.pack(pady=10)
 # =====================================================
 
 frame_resultados = tk.Frame(
-panel_izq,
-bg=COLOR_PANEL
+    panel_izq,
+    bg=COLOR_PANEL
 )
 
-frame_resultados.pack(pady=10)
 
+frame_resultados.pack(pady=10, fill="both", expand=True, padx=20)
 resultado_texto = tk.Text(
-frame_resultados,
-width=55,
-height=15,
-bg="#151521",
-fg="white",
-font=("Consolas", 10)
+    frame_resultados,
+    width=55,
+    height=30,  
+    bg="#151521",
+    fg="white",
+    font=("Consolas", 10)
 )
 
 resultado_texto.pack(
-side="left"
+    side="left",
+    fill="both",
+    expand=True
 )
-
-scroll_resultados = tk.Scrollbar(
-frame_resultados,
-command=resultado_texto.yview
-)
-
-scroll_resultados.pack(
-side="right",
-fill="y"
-)
-
-resultado_texto.config(
-yscrollcommand=scroll_resultados.set
-)
-
-
 
 
 # =====================================================
@@ -186,10 +172,28 @@ tabs.add(tab_limites, text="Límites")
 # FRAME GRAFICA
 # =====================================================
 
-frame_grafica = tk.Frame(tab_grafica)
+# =====================================================
+# FRAME GRAFICA
+# =====================================================
 
+frame_grafica = tk.Frame(tab_grafica)
 frame_grafica.pack(fill="both", expand=True)
 
+# --- GRÁFICA INICIAL VACÍA ---
+fig_inicial, ax_inicial = plt.subplots(figsize=(7, 7))
+ax_inicial.set_title("Esperando RUT...")
+ax_inicial.axhline(0, color='black', linewidth=0.5)
+ax_inicial.axvline(0, color='black', linewidth=0.5)
+ax_inicial.grid(True)
+ax_inicial.set_aspect("equal")
+
+ax_inicial.set_xlim(-10, 10)
+ax_inicial.set_ylim(-10, 10)
+
+canvas_inicial = FigureCanvasTkAgg(fig_inicial, master=frame_grafica)
+canvas_inicial.draw()
+canvas_inicial.get_tk_widget().pack(fill="both", expand=True)
+# ------------------------------------
 
 # =====================================================
 # TABLA LIMITES
@@ -475,58 +479,26 @@ def generar():
     # =================================================
 
     for widget in frame_grafica.winfo_children():
-
         widget.destroy()
     
     plt.close("all")
 
-    fig = plt.figure(figsize=(7, 7))
+    fig = graficar_desde_ecuacion(tipo.lower(), A, B, C, D, E)
 
-    ax = fig.add_subplot(111)
-
-    ax.set_title(f"{tipo}")
-
-    ax.axhline(0)
-    ax.axvline(0)
-
-    ax.grid(True)
-
-    ax.set_aspect("equal")
-
-    # =================================================
-    # GRAFICAR CONICA
-    # =================================================
-
-    try:
-
-        graficar_desde_ecuacion(
-            tipo.lower(),
-            A,
-            B,
-            C,
-            D,
-            E
+    if fig is None:
+        label_error = tk.Label(
+            frame_grafica, 
+            text="Caso degenerado detectado.\nNo se puede generar gráfica real.", 
+            font=("Arial", 14),
+            bg="white"
         )
-
-    except:
-
-        pass
-
-    canvas = FigureCanvasTkAgg(
-            fig,
-            master=frame_grafica
-        )
-
+        label_error.pack(expand=True)
+        return
+    
+    canvas = FigureCanvasTkAgg(fig, master=frame_grafica)
     canvas.draw()
-    plt.close(fig)
-
-
-    canvas.get_tk_widget().pack(
-            fill="both",
-            expand=True
-        )
-
-
+    canvas.get_tk_widget().pack(fill="both", expand=True)
+    
 # =====================================================
 # BOTON
 # =====================================================
