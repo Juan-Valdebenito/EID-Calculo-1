@@ -70,8 +70,9 @@ def graficar_conica(tipo, datos):
         puntos_x = x_arriba + x_abajo + [x_arriba[0]]
         puntos_y = y_arriba + y_abajo + [y_arriba[0]]
 
-        ax.plot(puntos_x, puntos_y, color='blue', linestyle='-', linewidth=2)
-        ax.set_aspect('equal') 
+        color_conica = 'blue' if tipo == "circunferencia" else 'purple'
+        ax.plot(puntos_x, puntos_y, color=color_conica, linestyle='-', linewidth=2)
+        ax.set_aspect('equal')
 
     # =================================================
     # HIPERBOLA 
@@ -84,30 +85,99 @@ def graficar_conica(tipo, datos):
         if a2 <= 0 or b2 <= 0:
             return fig
 
-        puntos_x, puntos_y = [], []
-        t = -20
+        a = raiz_aproximada(a2)
+        b = raiz_aproximada(b2)
+        
+        # Limitamos el dibujo a 15 unidades desde el vértice para que el zoom sea perfecto
+        rango_dibujo = 15  
+        paso = 0.1
 
-        while t <= 20:
-            if orientacion == "horizontal":
-                x = h + t
-                parte = ((x - h) ** 2) / a2 - 1
+        if orientacion == "horizontal":
+            x = h + a
+            x_der, y_der_arriba, y_der_abajo = [], [], []
+            while x <= h + a + rango_dibujo:
+                parte = ((x - h)**2) / a2 - 1
                 if parte >= 0:
                     y = raiz_aproximada(parte * b2)
-                    if y is not None:
-                        puntos_x.extend([x, x])
-                        puntos_y.extend([k + y, k - y])
-            else:
-                y = k + t
-                parte = ((y - k) ** 2) / a2 - 1
+                    x_der.append(x)
+                    y_der_arriba.append(k + y)
+                    y_der_abajo.append(k - y)
+                x += paso
+            
+            rama_1_x = list(reversed(x_der)) + x_der
+            rama_1_y = list(reversed(y_der_abajo)) + y_der_arriba
+            
+            x = h - a
+            x_izq, y_izq_arriba, y_izq_abajo = [], [], []
+            while x >= h - a - rango_dibujo: 
+                parte = ((x - h)**2) / a2 - 1
                 if parte >= 0:
-                    x = raiz_aproximada(parte * b2)
-                    if x is not None:
-                        puntos_x.extend([h + x, h - x])
-                        puntos_y.extend([y, y])
-            t += 0.05
+                    y = raiz_aproximada(parte * b2)
+                    x_izq.append(x)
+                    y_izq_arriba.append(k + y)
+                    y_izq_abajo.append(k - y)
+                x -= paso
 
-        ax.plot(puntos_x, puntos_y, color='red', marker='.', linestyle='', markersize=3)
-        ax.set_aspect('auto') 
+            rama_2_x = list(reversed(x_izq)) + x_izq
+            rama_2_y = list(reversed(y_izq_abajo)) + y_izq_arriba
+            
+            pendiente = b / a
+            lim_x_min = h - a - rango_dibujo
+            lim_x_max = h + a + rango_dibujo
+
+            asintota_1_x = [lim_x_min, lim_x_max]
+            asintota_1_y = [pendiente * (lim_x_min - h) + k, pendiente * (lim_x_max - h) + k]
+            
+            asintota_2_x = [lim_x_min, lim_x_max]
+            asintota_2_y = [-pendiente * (lim_x_min - h) + k, -pendiente * (lim_x_max - h) + k]
+
+        else: 
+            y = k + a
+            y_arr, x_arr_der, x_arr_izq = [], [], []
+            while y <= k + a + rango_dibujo:
+                parte = ((y - k)**2) / a2 - 1
+                if parte >= 0:
+                    x_val = raiz_aproximada(parte * b2)
+                    y_arr.append(y)
+                    x_arr_der.append(h + x_val)
+                    x_arr_izq.append(h - x_val)
+                y += paso
+                
+            rama_1_y = list(reversed(y_arr)) + y_arr
+            rama_1_x = list(reversed(x_arr_izq)) + x_arr_der
+
+            y = k - a
+            y_aba, x_aba_der, x_aba_izq = [], [], []
+            while y >= k - a - rango_dibujo:
+                parte = ((y - k)**2) / a2 - 1
+                if parte >= 0:
+                    x_val = raiz_aproximada(parte * b2)
+                    y_aba.append(y)
+                    x_aba_der.append(h + x_val)
+                    x_aba_izq.append(h - x_val)
+                y -= paso
+                
+            rama_2_y = list(reversed(y_aba)) + y_aba
+            rama_2_x = list(reversed(x_aba_izq)) + x_aba_der
+            
+            pendiente = a / b 
+            lim_y_min = k - a - rango_dibujo
+            lim_y_max = k + a + rango_dibujo
+            
+            asintota_1_x = [(lim_y_min - k) / pendiente + h, (lim_y_max - k) / pendiente + h]
+            asintota_1_y = [lim_y_min, lim_y_max]
+            
+            asintota_2_x = [(lim_y_min - k) / (-pendiente) + h, (lim_y_max - k) / (-pendiente) + h]
+            asintota_2_y = [lim_y_min, lim_y_max]
+
+
+        ax.plot(rama_1_x, rama_1_y, color='red', linestyle='-', linewidth=2)
+        ax.plot(rama_2_x, rama_2_y, color='red', linestyle='-', linewidth=2)
+        
+        ax.plot(asintota_1_x, asintota_1_y, color='gray', linestyle='--', linewidth=1.5, alpha=0.6)
+        ax.plot(asintota_2_x, asintota_2_y, color='gray', linestyle='--', linewidth=1.5, alpha=0.6)
+        
+        ax.set_aspect('auto')
 
     # =================================================
     # PARABOLA 
