@@ -162,6 +162,51 @@ tabs = ttk.Notebook(panel_der)
 tabs.pack(fill="both", expand=True)
 
 tab_grafica = tk.Frame(tabs)
+
+canvas_conica = tk.Canvas(tab_grafica)
+scroll_conica = tk.Scrollbar(
+    tab_grafica,
+    orient="vertical",
+    command=canvas_conica.yview
+)
+
+frame_conica = tk.Frame(canvas_conica)
+
+frame_conica.bind(
+    "<Configure>",
+    lambda e: canvas_conica.configure(
+        scrollregion=canvas_conica.bbox("all")
+    )
+)
+
+canvas_conica.create_window(
+    (0, 0),
+    window=frame_conica,
+    anchor="nw"
+)
+
+canvas_conica.configure(
+    yscrollcommand=scroll_conica.set
+)
+
+canvas_conica.bind_all(
+    "<MouseWheel>",
+    lambda event: canvas_conica.yview_scroll(
+        int(-1 * (event.delta / 120)),
+        "units"
+    )
+)
+
+canvas_conica.pack(
+    side="left",
+    fill="both",
+    expand=True
+)
+
+scroll_conica.pack(
+    side="right",
+    fill="y"
+)
 tab_limites = tk.Frame(tabs)
 
 tabs.add(tab_grafica, text="Cónica")
@@ -176,8 +221,102 @@ tabs.add(tab_limites, text="Límites")
 # FRAME GRAFICA
 # =====================================================
 
-frame_grafica = tk.Frame(tab_grafica)
+frame_grafica = tk.Frame(frame_conica)
 frame_grafica.pack(fill="both", expand=True)
+
+frame_elementos = tk.LabelFrame(
+    frame_conica,
+    text="Elementos Geométricos",
+    padx=10,
+    pady=10
+)
+
+frame_elementos.pack(
+    fill="x",
+    padx=10,
+    pady=10
+)
+
+# ==========================================
+# CAMPOS GEOMÉTRICOS
+# ==========================================
+
+elementos = {}
+
+def actualizar_campos_conica(tipo):
+
+    for widget in frame_elementos.winfo_children():
+        widget.destroy()
+
+    elementos.clear()
+
+    if tipo.lower() == "circunferencia":
+
+        campos = [
+            "Centro",
+            "Radio"
+        ]
+
+    elif tipo.lower() == "elipse":
+
+        campos = [
+            "Centro",
+            "Vértices",
+            "Focos",
+            "Eje mayor",
+            "Eje menor",
+            "Excentricidad"
+        ]
+
+    elif tipo.lower() in ["hipérbola", "hiperbola"]:
+
+        campos = [
+            "Centro",
+            "Vértices",
+            "Focos",
+            "Eje transverso",
+            "Eje conjugado",
+            "Asíntotas"
+        ]
+
+    elif tipo.lower() in ["parábola", "parabola"]:
+
+        campos = [
+            "Vértice",
+            "Foco",
+            "Directriz"
+        ]
+
+    else:
+
+        campos = []
+
+    for i, campo in enumerate(campos):
+
+        tk.Label(
+            frame_elementos,
+            text=campo + ":"
+        ).grid(
+            row=i,
+            column=0,
+            sticky="w",
+            padx=5,
+            pady=3
+        )
+
+        entrada = tk.Entry(
+            frame_elementos,
+            width=50
+        )
+
+        entrada.grid(
+            row=i,
+            column=1,
+            padx=5,
+            pady=3
+        )
+
+        elementos[campo] = entrada
 
 # --- GRÁFICA INICIAL VACÍA ---
 fig_inicial, ax_inicial = plt.subplots(figsize=(7, 7))
@@ -193,6 +332,9 @@ ax_inicial.set_ylim(-10, 10)
 canvas_inicial = FigureCanvasTkAgg(fig_inicial, master=frame_grafica)
 canvas_inicial.draw()
 canvas_inicial.get_tk_widget().pack(fill="both", expand=True)
+
+
+
 # ------------------------------------
 
 # =====================================================
@@ -262,16 +404,34 @@ for campo in campos:
     entries[campo] = entrada
 
 
+    
+
+
 # =====================================================
 # FUNCION PRINCIPAL
 # =====================================================
 
 def generar():
 
-    rut = entrada_rut.get()
-    if rut.strip() == "":
+    # =================================
+    # LIMPIAR SIEMPRE
+    # =================================
 
-        resultado_texto.delete("1.0", tk.END)
+    resultado_texto.delete("1.0", tk.END)
+
+    for entrada in entries.values():
+        entrada.delete(0, tk.END)
+
+    for item in tabla.get_children():
+        tabla.delete(item)
+
+    # =================================
+    # OBTENER RUT
+    # =================================
+
+    rut = entrada_rut.get()
+
+    if rut.strip() == "":
 
         resultado_texto.insert(
             tk.END,
@@ -342,6 +502,8 @@ def generar():
     A, B, C, D, E = construir_ecuacion_detallado(d, v)
 
     tipo = clasificar_conica(A, B)
+    
+    actualizar_campos_conica(tipo)
 
     # =================================================
     # TEXTO
