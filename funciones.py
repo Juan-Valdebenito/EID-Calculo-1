@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 def valor_absoluto(x):
 
     if x < 0:
@@ -52,7 +45,9 @@ def construir_funcion(d):
         datos = {
             "tipo": "removible",
             "a": a,
-            "d1": d1
+            "d1": d1,
+            "regla": f"d8 = {d8} → {d8}%3 = 0",
+            "funcion": f"((x-{a})(x+{d1}))/(x-{a})"
         }
 
         return datos
@@ -82,7 +77,11 @@ x + {d4}      si x >= {a}
             "tipo": "salto",
             "a": a,
             "d2": d2,
-            "d4": d4
+            "d4": d4,
+            "regla": f"d8 = {d8} → {d8}%3 = 1",
+            "funcion":
+                f"x + {d2} si x < {a}\n"
+                f"x + {d4} si x ≥ {a}"
         }
 
         return datos
@@ -104,7 +103,9 @@ x + {d4}      si x >= {a}
         datos = {
             "tipo": "infinita",
             "a": a,
-            "numerador": d5 + 1
+            "numerador": d5 + 1,
+            "regla": f"d8 = {d8} → {d8}%3 = 2",
+            "funcion": f"{d5+1}/(x-{a})"
         }
 
         return datos

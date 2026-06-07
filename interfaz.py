@@ -25,6 +25,7 @@ from funciones import construir_funcion
 from evidencia import obtener_tabla
 
 from graficas import graficar_desde_ecuacion
+from grafica_limites import graficar_funcion
 
 
 # =====================================================
@@ -189,13 +190,6 @@ canvas_conica.configure(
     yscrollcommand=scroll_conica.set
 )
 
-canvas_conica.bind_all(
-    "<MouseWheel>",
-    lambda event: canvas_conica.yview_scroll(
-        int(-1 * (event.delta / 120)),
-        "units"
-    )
-)
 
 canvas_conica.pack(
     side="left",
@@ -207,15 +201,73 @@ scroll_conica.pack(
     side="right",
     fill="y"
 )
+
 tab_limites = tk.Frame(tabs)
+
+canvas_limites = tk.Canvas(tab_limites)
+
+scroll_limites = tk.Scrollbar(
+    tab_limites,
+    orient="vertical",
+    command=canvas_limites.yview
+)
+
+frame_limites = tk.Frame(canvas_limites)
+
+frame_limites.bind(
+    "<Configure>",
+    lambda e: canvas_limites.configure(
+        scrollregion=canvas_limites.bbox("all")
+    )
+)
+
+canvas_limites.create_window(
+    (0, 0),
+    window=frame_limites,
+    anchor="nw"
+)
+
+canvas_limites.configure(
+    yscrollcommand=scroll_limites.set
+)
+
+
+canvas_limites.pack(
+    side="left",
+    fill="both",
+    expand=True
+)
+
+scroll_limites.pack(
+    side="right",
+    fill="y"
+)
+
+
 
 tabs.add(tab_grafica, text="Cónica")
 tabs.add(tab_limites, text="Límites")
 
+def scroll_mouse(event):
 
-# =====================================================
-# FRAME GRAFICA
-# =====================================================
+    pestaña = tabs.index(tabs.select())
+
+    if pestaña == 0:
+        canvas_conica.yview_scroll(
+            int(-1 * (event.delta / 120)),
+            "units"
+        )
+
+    elif pestaña == 1:
+        canvas_limites.yview_scroll(
+            int(-1 * (event.delta / 120)),
+            "units"
+        )
+
+ventana.bind_all(
+    "<MouseWheel>",
+    scroll_mouse
+)
 
 # =====================================================
 # FRAME GRAFICA
@@ -333,7 +385,17 @@ canvas_inicial = FigureCanvasTkAgg(fig_inicial, master=frame_grafica)
 canvas_inicial.draw()
 canvas_inicial.get_tk_widget().pack(fill="both", expand=True)
 
+# ==========================================
+# GRAFICA LIMITES
+# ==========================================
 
+frame_grafica_limites = tk.Frame(frame_limites)
+
+frame_grafica_limites.pack(
+    fill="both",
+    expand=True,
+    pady=10
+)
 
 # ------------------------------------
 
@@ -342,7 +404,7 @@ canvas_inicial.get_tk_widget().pack(fill="both", expand=True)
 # =====================================================
 
 tabla = ttk.Treeview(
-    tab_limites,
+    frame_limites,
     columns=("x", "y"),
     show="headings",
     height=12
@@ -357,12 +419,16 @@ tabla.column("y", width=150)
 tabla.pack(pady=20)
 
 
+
+
+
+
 # =====================================================
 # CAMPOS VACIOS DEFENSA
 # =====================================================
 
 frame_defensa = tk.Frame(
-    tab_limites
+    frame_limites
 )
 
 frame_defensa.pack(pady=20)
@@ -565,6 +631,46 @@ def generar():
         f"Punto de análisis: x = {datos_funcion['a']}\n"
     )
 
+    resultado_texto.insert(
+    tk.END,
+    "\n====================================\n"
+    )
+
+    resultado_texto.insert(
+        tk.END,
+        " FUNCIÓN GENERADA\n"
+    )
+
+    resultado_texto.insert(
+        tk.END,
+        "====================================\n\n"
+    )
+
+    resultado_texto.insert(
+        tk.END,
+        f"{datos_funcion['funcion']}\n"
+    )
+
+    resultado_texto.insert(
+        tk.END,
+        "\n====================================\n"
+    )
+
+    resultado_texto.insert(
+        tk.END,
+        " REGLA APLICADA\n"
+    )
+
+    resultado_texto.insert(
+        tk.END,
+        "====================================\n\n"
+    )
+
+    resultado_texto.insert(
+        tk.END,
+        f"{datos_funcion['regla']}\n"
+    )
+
     analizar_limites(d)
     izquierda = limite_izquierda(datos_funcion)
     derecha = limite_derecha(datos_funcion)
@@ -660,6 +766,29 @@ def generar():
     canvas = FigureCanvasTkAgg(fig, master=frame_grafica)
     canvas.draw()
     canvas.get_tk_widget().pack(fill="both", expand=True)
+
+    # ==========================================
+    # GRAFICA DE LIMITES
+    # ==========================================
+
+    for widget in frame_grafica_limites.winfo_children():
+        widget.destroy()
+        
+    plt.close("all")
+
+    fig_limites = graficar_funcion(datos_funcion)
+
+    canvas_limites = FigureCanvasTkAgg(
+        fig_limites,
+        master=frame_grafica_limites
+    )
+
+    canvas_limites.draw()
+
+    canvas_limites.get_tk_widget().pack(
+        fill="both",
+        expand=True
+    )
     
 # =====================================================
 # BOTON
