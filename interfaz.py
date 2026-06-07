@@ -393,9 +393,32 @@ frame_grafica_limites = tk.Frame(frame_limites)
 
 frame_grafica_limites.pack(
     fill="both",
-    expand=True,
-    pady=10
+    expand=True
 )
+
+frame_explicacion_limites = tk.Frame(tab_limites, bg=COLOR_PANEL)
+frame_explicacion_limites.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+
+label_limites_titulo = tk.Label(
+    frame_explicacion_limites,
+    text="Justificación Matemática del Límite",
+    font=("Arial", 12, "bold"),
+    bg=COLOR_PANEL,
+    fg="white"
+)
+label_limites_titulo.pack(pady=5)
+
+texto_limites_explicacion = tk.Text(
+    frame_explicacion_limites,
+    width=45,
+    height=20,
+    bg="#151521",
+    fg="white",
+    font=("Consolas", 10)
+)
+texto_limites_explicacion.pack(fill="both", expand=True, padx=5, pady=5)
+texto_limites_explicacion.config(state="disabled")
+
 
 # ------------------------------------
 
@@ -789,6 +812,52 @@ def generar():
         fill="both",
         expand=True
     )
+
+    # ==================================================
+    # INTEGRACIÓN DE JUSTIFICACIÓN DE LÍMITES EN LA UI
+    # ==================================================
+    
+    texto_limites_explicacion.config(state="normal")
+    texto_limites_explicacion.delete("1.0", tk.END)
+    
+    resto_calculado = d[7] % 3 
+    tipo_discontinuidad = datos_funcion["tipo"]
+    punto_a = datos_funcion["a"]
+    izq_val = limite_izquierda(datos_funcion)
+    der_val = limite_derecha(datos_funcion)
+    
+    reporte = "========================================================\n"
+    reporte += "              REPORTE ANALÍTICO DE LÍMITES              \n"
+    reporte += "========================================================\n\n"
+    reporte += f"• Punto Crítico de Análisis (a): x = {punto_a}\n"
+    reporte += f"• Criterio del RUT (d8 % 3): {resto_calculado}\n"
+    reporte += f"• Tipo de Discontinuidad: {tipo_discontinuidad.upper()}\n\n"
+    reporte += f"-> Límite por la izquierda (x -> {punto_a}-): {izq_val}\n"
+    reporte += f"-> Límite por la derecha   (x -> {punto_a}+): {der_val}\n\n"
+    reporte += "--------------------------------------------------------\n"
+    reporte += "CONCLUSIÓN Y JUSTIFICACIÓN MATEMÁTICA:\n"
+    reporte += "--------------------------------------------------------\n\n"
+    
+    if tipo_discontinuidad == "removible":
+        reporte += f"Como los límites laterales existen y son iguales ({izq_val} = {der_val}),\n"
+        reporte += f"el límite general EXISTE y vale {izq_val}.\n\n"
+        reporte += f"Sin embargo, la función NO está definida en el punto x = {punto_a}.\n"
+        reporte += f"Por lo tanto, se presenta una DISCONTINUIDAD REMOVIBLE."
+        
+    elif tipo_discontinuidad == "salto":
+        reporte += f"Al aproximarse al punto crítico x = {punto_a}, los límites\n"
+        reporte += f"laterales tienden a valores finitos pero distintos ({izq_val} ≠ {der_val}).\n\n"
+        reporte += f"Dado que los caminos no coinciden, el límite general NO EXISTE.\n"
+        reporte += f"Esto genera una DISCONTINUIDAD DE SALTO FINITO."
+        
+    elif tipo_discontinuidad == "infinita":
+        reporte += f"Se observa que al menos uno de los límites laterales crece\n"
+        reporte += f"o decrece sin cota hacia el infinito.\n\n"
+        reporte += f"La recta x = {punto_a} actúa como ASÍNTOTA VERTICAL, generando\n"
+        reporte += f"una DISCONTINUIDAD INFINITA."
+
+    texto_limites_explicacion.insert("1.0", reporte)
+    texto_limites_explicacion.config(state="disabled")
     
 # =====================================================
 # BOTON
