@@ -27,6 +27,224 @@ from evidencia import obtener_tabla
 from graficas import graficar_desde_ecuacion
 from grafica_limites import graficar_funcion
 
+# =====================================================
+# LÓGICA DE EVALUACIÓN INTERACTIVA CON BOTÓN INDIVIDUAL
+# =====================================================
+
+def verificar_campo_especifico(elemento):
+    """Valida un único campo Entry específico y cambia su estado estéticamente"""
+    entry = sesion_evaluacion["widgets_entry"][elemento]
+    valor_usuario = entry.get().strip()
+    valor_correcto = sesion_evaluacion["valores_reales"].get(elemento, "")
+    
+    es_correcto = False
+    try:
+        # Comparación numérica aproximada a 2 decimales
+        if round(float(valor_usuario), 2) == round(float(valor_correcto), 2):
+            es_correcto = True
+    except ValueError:
+        # Comparación de texto si es la orientación (ej: horizontal)
+        if valor_usuario.lower() == str(valor_correcto).lower():
+            es_correcto = True
+            
+    # Cambiamos el contenido del input dinámicamente según tu idea, Gustavo
+    if es_correcto:
+        entry.config(fg="#00ff66", font=("Arial", 10, "bold")) # Letras verdes
+        entry.delete(0, tk.END)
+        entry.insert(0, "¡Correcto!")
+    else:
+        entry.config(fg="#ff3333", font=("Arial", 10, "bold")) # Letras rojas
+        entry.delete(0, tk.END)
+        entry.insert(0, f"Error. Era: {valor_correcto}")
+
+def verificar_fila_evaluacion(claves):
+    """Valida los campos Entry de una fila completa y cambia su estado con colores dinámicos"""
+    valores_reales = sesion_evaluacion["valores_reales"]
+    widgets_entry = sesion_evaluacion["widgets_entry"]
+    
+    for clave in claves:
+        if clave not in widgets_entry:
+            continue
+        entry = widgets_entry[clave]
+        valor_usuario = entry.get().strip()
+        valor_correcto = valores_reales.get(clave, 0)
+        
+        es_correcto = False
+        try:
+            # Comparación numérica aproximada tolerando pequeñas variaciones decimales
+            if abs(float(valor_usuario) - float(valor_correcto)) < 0.05:
+                es_correcto = True
+        except ValueError:
+            # Comparación de texto estándar por si acaso
+            if valor_usuario.lower() == str(valor_correcto).lower():
+                es_correcto = True
+                
+        # Aplicamos el comportamiento estético solicitado por Gustavo
+        if es_correcto:
+            entry.config(fg="#00ff66", font=("Arial", 10, "bold")) # Verde para correcto
+            entry.delete(0, tk.END)
+            entry.insert(0, "¡Correcto!")
+        else:
+            entry.config(fg="#ff3333", font=("Arial", 9, "bold")) # Rojo para error
+            entry.delete(0, tk.END)
+            entry.insert(0, f"Error: {valor_correcto}")
+
+def mostrar_campos_evaluacion(tipo, A, B, C, D, E):
+    """Genera filas con elementos geométricos reales de Ariel y parejas horizontales de Gustavo"""
+    # Limpiamos el contenedor anterior por completo
+    for widget in frame_campos_dinamicos.winfo_children():
+        widget.destroy()
+        
+    sesion_evaluacion["valores_reales"] = {}
+    sesion_evaluacion["widgets_entry"] = {}
+    
+    valores_reales = {}
+    estructura_filas = [] # Guardará cómo se agruparán los elementos visualmente
+    
+    # Helper seguro para calcular raíces sin importar restricciones de librerías
+    def sqrt_segura(val):
+        return val ** 0.5 if val > 0 else 0
+
+    # =================================================
+    # CÁLCULOS ANALÍTICOS Y MATRICES DE LAYOUT
+    # =================================================
+    
+    if tipo in ["circunferencia", "elipse", "hipérbola"] and A != 0 and B != 0:
+        h_val = -C / (2 * A)
+        k_val = -D / (2 * B)
+        constante = -E + (C ** 2) / (4 * A) + (D ** 2) / (4 * B)
+        
+        valores_reales["Centro H"] = round(h_val, 2)
+        valores_reales["Centro K"] = round(k_val, 2)
+        estructura_filas.append({"tipo": "pair", "lbl1": "Centro H", "lbl2": "Centro K", "keys": ["Centro H", "Centro K"]})
+        
+        if tipo == "circunferencia":
+            valores_reales["Radio"] = round(sqrt_segura(constante / A), 2)
+            estructura_filas.append({"tipo": "single", "lbl": "Radio", "key": "Radio"})
+            
+        elif tipo == "elipse":
+            a2, b2 = constante / A, constante / B
+            if abs(a2) >= abs(b2): # Elipse Horizontal
+                a_param = sqrt_segura(abs(a2))
+                b_param = sqrt_segura(abs(b2))
+                c_param = sqrt_segura(abs(a2) - abs(b2))
+                f1_x, f1_y = h_val - c_param, k_val
+                f2_x, f2_y = h_val + c_param, k_val
+            else: # Elipse Vertical
+                a_param = sqrt_segura(abs(b2))
+                b_param = sqrt_segura(abs(a2))
+                c_param = sqrt_segura(abs(b2) - abs(a2))
+                f1_x, f1_y = h_val, k_val - c_param
+                f2_x, f2_y = h_val, k_val + c_param
+                
+            valores_reales["Foco 1 X"] = round(f1_x, 2)
+            valores_reales["Foco 1 Y"] = round(f1_y, 2)
+            valores_reales["Foco 2 X"] = round(f2_x, 2)
+            valores_reales["Foco 2 Y"] = round(f2_y, 2)
+            valores_reales["Eje Mayor"] = round(2 * a_param, 2)
+            valores_reales["Eje Menor"] = round(2 * b_param, 2)
+            valores_reales["Excentricidad"] = round(c_param / a_param, 2) if a_param > 0 else 0
+            
+            estructura_filas.append({"tipo": "pair", "lbl1": "Foco 1 X", "lbl2": "Foco 1 Y", "keys": ["Foco 1 X", "Foco 1 Y"]})
+            estructura_filas.append({"tipo": "pair", "lbl1": "Foco 2 X", "lbl2": "Foco 2 Y", "keys": ["Foco 2 X", "Foco 2 Y"]})
+            estructura_filas.append({"tipo": "single", "lbl": "Eje Mayor", "key": "Eje Mayor"})
+            estructura_filas.append({"tipo": "single", "lbl": "Eje Menor", "key": "Eje Menor"})
+            estructura_filas.append({"tipo": "single", "lbl": "Excentricidad", "key": "Excentricidad"})
+            
+        elif tipo == "hipérbola":
+            a_param = sqrt_segura(abs(constante / A))
+            b_param = sqrt_segura(abs(constante / B))
+            
+            # Determinamos las pendientes exactas de las asíntotas calculadas en tu graficas.py
+            m_val = (b_param / a_param) if A > 0 else (a_param / b_param)
+            
+            valores_reales["Eje Transverso"] = round(2 * a_param, 2)
+            valores_reales["Eje Conjugado"] = round(2 * b_param, 2)
+            valores_reales["Asíntota 1 (m)"] = round(m_val, 2)
+            valores_reales["Asíntota 2 (m)"] = round(-m_val, 2)
+            
+            estructura_filas.append({"tipo": "single", "lbl": "Eje Transverso", "key": "Eje Transverso"})
+            estructura_filas.append({"tipo": "single", "lbl": "Eje Conjugado", "key": "Eje Conjugado"})
+            estructura_filas.append({"tipo": "pair", "lbl1": "Asíntota 1 (m)", "lbl2": "Asíntota 2 (m)", "keys": ["Asíntota 1 (m)", "Asíntota 2 (m)"]})
+            
+    elif tipo == "parábola":
+        if A == 0 and B != 0: # Horizontal
+            k_val = -D / (2 * B)
+            h_val = (-E + (D**2)/(4*B)) / C if C != 0 else 0
+            p_val = -C / (4 * B)
+            f_x, f_y = h_val + p_val, k_val
+            dir_val = h_val - p_val
+        else: # Vertical
+            h_val = -C / (2 * A)
+            k_val = (-E + (C**2)/(4*A)) / D if D != 0 else 0
+            p_val = -D / (4 * A)
+            f_x, f_y = h_val, k_val + p_val
+            dir_val = k_val - p_val
+            
+        valores_reales["Vértice H"] = round(h_val, 2)
+        valores_reales["Vértice K"] = round(k_val, 2)
+        valores_reales["Foco X"] = round(f_x, 2)
+        valores_reales["Foco Y"] = round(f_y, 2)
+        valores_reales["Directriz"] = round(dir_val, 2)
+        
+        estructura_filas.append({"tipo": "pair", "lbl1": "Vértice H", "lbl2": "Vértice K", "keys": ["Vértice H", "Vértice K"]})
+        estructura_filas.append({"tipo": "pair", "lbl1": "Foco X", "lbl2": "Foco Y", "keys": ["Foco X", "Foco Y"]})
+        estructura_filas.append({"tipo": "single", "lbl": "Directriz (Valor)", "key": "Directriz"})
+
+    sesion_evaluacion["valores_reales"] = valores_reales
+
+    # =================================================
+    # CONSTRUCCIÓN DINÁMICA DEL INTERFAZ GRÁFICA
+    # =================================================
+    
+    for fila in estructura_filas:
+        row_frame = tk.Frame(frame_campos_dinamicos, bg=COLOR_PANEL)
+        row_frame.pack(fill="x", pady=4, padx=(40, 40)) # Centrado y compacto horizontalmente
+        
+        if fila["tipo"] == "single":
+            lbl = tk.Label(row_frame, text=f"{fila['lbl']}:", font=("Arial", 10), bg=COLOR_PANEL, fg="white", width=14, anchor="e")
+            lbl.pack(side="left", padx=5)
+            
+            entry = tk.Entry(row_frame, font=("Arial", 10), bg="#151521", fg="white", insertbackground="white", width=15)
+            entry.pack(side="left", padx=5)
+            entry.bind("<Button-1>", lambda e, ent=entry: [ent.config(fg="white", font=("Arial", 10)), ent.delete(0, tk.END)])
+            
+            sesion_evaluacion["widgets_entry"][fila["key"]] = entry
+            
+        elif fila["tipo"] == "pair":
+            # Primer elemento de la pareja
+            lbl1 = tk.Label(row_frame, text=f"{fila['lbl1']}:", font=("Arial", 10), bg=COLOR_PANEL, fg="white", width=14, anchor="e")
+            lbl1.pack(side="left", padx=2)
+            
+            entry1 = tk.Entry(row_frame, font=("Arial", 10), bg="#151521", fg="white", insertbackground="white", width=10)
+            entry1.pack(side="left", padx=2)
+            entry1.bind("<Button-1>", lambda e, ent=entry1: [ent.config(fg="white", font=("Arial", 10)), ent.delete(0, tk.END)])
+            
+            sesion_evaluacion["widgets_entry"][fila["keys"][0]] = entry1
+            
+            # Segundo elemento de la pareja pegado horizontalmente
+            lbl2 = tk.Label(row_frame, text=f"{fila['lbl2']}:", font=("Arial", 10), bg=COLOR_PANEL, fg="white", width=14, anchor="e")
+            lbl2.pack(side="left", padx=2)
+            
+            entry2 = tk.Entry(row_frame, font=("Arial", 10), bg="#151521", fg="white", insertbackground="white", width=10)
+            entry2.pack(side="left", padx=2)
+            entry2.bind("<Button-1>", lambda e, ent=entry2: [ent.config(fg="white", font=("Arial", 10)), ent.delete(0, tk.END)])
+            
+            sesion_evaluacion["widgets_entry"][fila["keys"][1]] = entry2
+
+        # Botón único al final de la fila encargado de verificar el contenido de esa línea
+        btn_verificar = tk.Button(
+            row_frame,
+            text="Verificar",
+            command=lambda k=fila.get("keys", [fila.get("key")]): verificar_fila_evaluacion(k),
+            bg=COLOR_BOTON,
+            fg="white",
+            font=("Arial", 9, "bold"),
+            padx=10,
+            pady=1
+        )
+        btn_verificar.pack(side="left", padx=10)
+
 
 # =====================================================
 # COLORES
@@ -48,8 +266,7 @@ FUENTE_TITULO = ("Arial", 18, "bold")
 ventana = tk.Tk()
 
 ventana.title("Proyecto EID - Secciones Cónicas")
-ventana.geometry("1400x850")
-
+ventana.geometry("1150x830")
 ventana.configure(bg=COLOR_FONDO)
 
 
@@ -160,7 +377,7 @@ resultado_texto.pack(
 
 tabs = ttk.Notebook(panel_der)
 
-tabs.pack(fill="both", expand=True)
+tabs.pack(side="left", fill="both", expand=True)
 
 tab_grafica = tk.Frame(tabs)
 
@@ -273,21 +490,40 @@ ventana.bind_all(
 # FRAME GRAFICA
 # =====================================================
 
-frame_grafica = tk.Frame(frame_conica)
-frame_grafica.pack(fill="both", expand=True)
-
-frame_elementos = tk.LabelFrame(
-    frame_conica,
-    text="Elementos Geométricos",
-    padx=10,
-    pady=10
+frame_contenido_conica = tk.Frame(tab_grafica, bg=COLOR_FONDO)
+frame_contenido_conica.pack(side="left", fill="both", expand=True, padx=10, pady=5)
+# 1. Tu gráfica posicionada ARRIBA del bloque unificado
+frame_grafica = tk.Frame(frame_contenido_conica, bg="white")
+frame_grafica.pack(side="top", fill="both", expand=True, padx=5, pady=5)
+# 2. Tu panel de Evaluación Interactiva posicionado ABAJO del bloque unificado
+frame_evaluacion_conica = tk.Frame(frame_contenido_conica, bg=COLOR_PANEL)
+frame_evaluacion_conica.pack(side="bottom", fill="x", padx=5, pady=5)
+lbl_eval_titulo = tk.Label(
+    frame_evaluacion_conica,
+    text="─── Evaluación Interactiva de Elementos Geométricos ───",
+    font=("Arial", 10, "bold"),
+    bg=COLOR_PANEL,
+    fg="#4a90e2"
 )
+lbl_eval_titulo.pack(pady=5, anchor="w", padx=20)
+# Contenedor para las preguntas dinámicas
+frame_campos_dinamicos = tk.Frame(frame_evaluacion_conica, bg=COLOR_PANEL)
+frame_campos_dinamicos.pack(fill="x", pady=5)
+# Diccionario global de persistencia
+sesion_evaluacion = {"valores_reales": {}, "widgets_entry": {}}
 
-frame_elementos.pack(
-    fill="x",
-    padx=10,
-    pady=10
-)
+# frame_elementos = tk.LabelFrame(
+#     frame_conica,
+#     text="Elementos Geométricos",
+#     padx=10,
+#     pady=10
+# )
+
+# frame_elementos.pack(
+#     fill="x",
+#     padx=10,
+#     pady=10
+# )
 
 # ==========================================
 # CAMPOS GEOMÉTRICOS
@@ -295,80 +531,80 @@ frame_elementos.pack(
 
 elementos = {}
 
-def actualizar_campos_conica(tipo):
+# def actualizar_campos_conica(tipo):
 
-    for widget in frame_elementos.winfo_children():
-        widget.destroy()
+#     for widget in frame_elementos.winfo_children():
+#         widget.destroy()
 
-    elementos.clear()
+#     elementos.clear()
 
-    if tipo.lower() == "circunferencia":
+#     if tipo.lower() == "circunferencia":
 
-        campos = [
-            "Centro",
-            "Radio"
-        ]
+#         campos = [
+#             "Centro",
+#             "Radio"
+#         ]
 
-    elif tipo.lower() == "elipse":
+#     elif tipo.lower() == "elipse":
 
-        campos = [
-            "Centro",
-            "Vértices",
-            "Focos",
-            "Eje mayor",
-            "Eje menor",
-            "Excentricidad"
-        ]
+#         campos = [
+#             "Centro",
+#             "Vértices",
+#             "Focos",
+#             "Eje mayor",
+#             "Eje menor",
+#             "Excentricidad"
+#         ]
 
-    elif tipo.lower() in ["hipérbola", "hiperbola"]:
+#     elif tipo.lower() in ["hipérbola", "hiperbola"]:
 
-        campos = [
-            "Centro",
-            "Vértices",
-            "Focos",
-            "Eje transverso",
-            "Eje conjugado",
-            "Asíntotas"
-        ]
+#         campos = [
+#             "Centro",
+#             "Vértices",
+#             "Focos",
+#             "Eje transverso",
+#             "Eje conjugado",
+#             "Asíntotas"
+#         ]
 
-    elif tipo.lower() in ["parábola", "parabola"]:
+#     elif tipo.lower() in ["parábola", "parabola"]:
 
-        campos = [
-            "Vértice",
-            "Foco",
-            "Directriz"
-        ]
+#         campos = [
+#             "Vértice",
+#             "Foco",
+#             "Directriz"
+#         ]
 
-    else:
+#     else:
 
-        campos = []
+#         campos = []
 
-    for i, campo in enumerate(campos):
+#     for i, campo in enumerate(campos):
 
-        tk.Label(
-            frame_elementos,
-            text=campo + ":"
-        ).grid(
-            row=i,
-            column=0,
-            sticky="w",
-            padx=5,
-            pady=3
-        )
+#         tk.Label(
+#             frame_elementos,
+#             text=campo + ":"
+#         ).grid(
+#             row=i,
+#             column=0,
+#             sticky="w",
+#             padx=5,
+#             pady=3
+#         )
 
-        entrada = tk.Entry(
-            frame_elementos,
-            width=50
-        )
+#         entrada = tk.Entry(
+#             frame_elementos,
+#             width=50
+#         )
 
-        entrada.grid(
-            row=i,
-            column=1,
-            padx=5,
-            pady=3
-        )
+#         entrada.grid(
+#             row=i,
+#             column=1,
+#             padx=5,
+#             pady=3
+#         )
 
-        elementos[campo] = entrada
+#         elementos[campo] = entrada
 
 # --- GRÁFICA INICIAL VACÍA ---
 fig_inicial, ax_inicial = plt.subplots(figsize=(7, 7))
@@ -592,7 +828,7 @@ def generar():
 
     tipo = clasificar_conica(A, B)
     
-    actualizar_campos_conica(tipo)
+    #actualizar_campos_conica(tipo)
 
     # =================================================
     # TEXTO
@@ -789,6 +1025,8 @@ def generar():
     canvas = FigureCanvasTkAgg(fig, master=frame_grafica)
     canvas.draw()
     canvas.get_tk_widget().pack(fill="both", expand=True)
+
+    mostrar_campos_evaluacion(tipo.lower(), A, B, C, D, E)
 
     # ==========================================
     # GRAFICA DE LIMITES
