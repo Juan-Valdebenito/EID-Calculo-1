@@ -18,42 +18,88 @@ def ecuacion_general(A, B, C, D, E):
 
     texto = ""
 
+    # ==========================
     # Término x²
+    # ==========================
+
     if A != 0:
         texto += f"{fmt(A)}x² "
 
+    # ==========================
     # Término y²
+    # ==========================
+
     if B > 0:
-        texto += f"+ {fmt(B)}y² "
+
+        if texto == "":
+            texto += f"{fmt(B)}y² "
+        else:
+            texto += f"+ {fmt(B)}y² "
 
     elif B < 0:
-        texto += f"- {fmt(abs(B))}y² "
 
+        if texto == "":
+            texto += f"- {fmt(abs(B))}y² "
+        else:
+            texto += f"- {fmt(abs(B))}y² "
+
+    # ==========================
     # Término x
+    # ==========================
+
     if C > 0:
-        texto += f"+ {fmt(C)}x "
+
+        if texto == "":
+            texto += f"{fmt(C)}x "
+        else:
+            texto += f"+ {fmt(C)}x "
 
     elif C < 0:
-        texto += f"- {fmt(abs(C))}x "
 
+        if texto == "":
+            texto += f"- {fmt(abs(C))}x "
+        else:
+            texto += f"- {fmt(abs(C))}x "
+
+    # ==========================
     # Término y
+    # ==========================
+
     if D > 0:
-        texto += f"+ {fmt(D)}y "
+
+        if texto == "":
+            texto += f"{fmt(D)}y "
+        else:
+            texto += f"+ {fmt(D)}y "
 
     elif D < 0:
-        texto += f"- {fmt(abs(D))}y "
 
+        if texto == "":
+            texto += f"- {fmt(abs(D))}y "
+        else:
+            texto += f"- {fmt(abs(D))}y "
+
+    # ==========================
     # Constante
+    # ==========================
+
     if E > 0:
-        texto += f"+ {fmt(E)} "
+
+        if texto == "":
+            texto += f"{fmt(E)} "
+        else:
+            texto += f"+ {fmt(E)} "
 
     elif E < 0:
-        texto += f"- {fmt(abs(E))} "
+
+        if texto == "":
+            texto += f"- {fmt(abs(E))} "
+        else:
+            texto += f"- {fmt(abs(E))} "
 
     texto += "= 0"
 
     return texto
-
 
 # =====================================================
 # FORMA CANÓNICA

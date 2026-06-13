@@ -824,7 +824,13 @@ def generar():
 
     v = calcular_v(dv)
 
-    A, B, C, D, E = construir_ecuacion_detallado(d, v)
+    A, B, C, D, E, procedimiento_conica = construir_ecuacion_detallado(d, v)
+
+    
+    resultado_texto.insert(
+    tk.END,
+    procedimiento_conica + "\n\n"
+)
 
     tipo = clasificar_conica(A, B)
     
