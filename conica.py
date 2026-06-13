@@ -25,10 +25,6 @@ def construir_ecuacion_detallado(d, v):
 
     procedimiento.append("")
 
-    # =========================================
-    # CAMBIO DE SIGNO
-    # =========================================
-
     if d8 % 2 != 0:
 
         procedimiento.append(
@@ -38,12 +34,7 @@ def construir_ecuacion_detallado(d, v):
         B = -B
 
         procedimiento.append(f"B = {B}")
-
         procedimiento.append("")
-
-    # =========================================
-    # CIRCUNFERENCIA
-    # =========================================
 
     if d1 == d2:
 
@@ -58,12 +49,7 @@ def construir_ecuacion_detallado(d, v):
         B = A
 
         procedimiento.append(f"B = {B}")
-
         procedimiento.append("")
-
-    # =========================================
-    # PARÁBOLA
-    # =========================================
 
     if (d5 + d6) % 3 == 0:
 
@@ -93,10 +79,6 @@ def construir_ecuacion_detallado(d, v):
 
         procedimiento.append("")
 
-    # =========================================
-    # RESTO DE COEFICIENTES
-    # =========================================
-
     C = -(d5 + d6)
     D = -(d7 + d8)
     E = d1 + d3 + d5 + d7
@@ -111,7 +93,7 @@ def construir_ecuacion_detallado(d, v):
 
 
 # =====================================================
-# CLASIFICACIÓN DE LA CÓNICA
+# CLASIFICACIÓN
 # =====================================================
 
 def clasificar_conica(A, B):
@@ -130,7 +112,7 @@ def clasificar_conica(A, B):
 
 
 # =====================================================
-# ECUACIÓN EN FORMATO LEGIBLE
+# ECUACIÓN GENERAL
 # =====================================================
 
 def obtener_ecuacion_general(A, B, C, D, E):
@@ -166,6 +148,123 @@ def obtener_ecuacion_general(A, B, C, D, E):
 
 
 # =====================================================
+# FORMA CANÓNICA DETALLADA
+# =====================================================
+
+def obtener_forma_canonica(A, B, C, D, E):
+
+    pasos = []
+
+    pasos.append("====================================")
+    pasos.append(" TRANSFORMACIÓN A FORMA CANÓNICA")
+    pasos.append("====================================")
+    pasos.append("")
+
+    tipo = clasificar_conica(A, B)
+
+    # CIRCUNFERENCIA Y ELIPSE
+
+    if tipo in ["Circunferencia", "Elipse"]:
+
+        h = -C / (2 * A)
+        k = -D / (2 * B)
+
+        pasos.append("Completando cuadrados:")
+        pasos.append("")
+
+        pasos.append(f"h = -({C})/(2·{A}) = {h}")
+        pasos.append(f"k = -({D})/(2·{B}) = {k}")
+
+        constante = (
+            -E
+            + (C ** 2) / (4 * A)
+            + (D ** 2) / (4 * B)
+        )
+
+        pasos.append("")
+        pasos.append("Constante de la forma canónica:")
+        pasos.append(f"K = {constante}")
+
+        if tipo == "Circunferencia":
+
+            radio2 = constante / A
+
+            pasos.append("")
+            pasos.append("Forma canónica:")
+
+            pasos.append(
+                f"(x - ({h}))² + (y - ({k}))² = {radio2}"
+            )
+
+        else:
+
+            a2 = constante / A
+            b2 = constante / B
+
+            pasos.append("")
+            pasos.append("Forma canónica:")
+
+            pasos.append(
+                f"(x - ({h}))²/{a2} + (y - ({k}))²/{b2} = 1"
+            )
+
+    # HIPÉRBOLA
+
+    elif tipo == "Hipérbola":
+
+        h = -C / (2 * A)
+        k = -D / (2 * B)
+
+        pasos.append("Completando cuadrados:")
+        pasos.append("")
+
+        pasos.append(f"h = {h}")
+        pasos.append(f"k = {k}")
+
+        constante = (
+            -E
+            + (C ** 2) / (4 * A)
+            + (D ** 2) / (4 * B)
+        )
+
+        pasos.append("")
+        pasos.append(f"K = {constante}")
+
+        pasos.append("")
+        pasos.append(
+            "La ecuación corresponde a una hipérbola."
+        )
+
+    # PARÁBOLA
+
+    else:
+
+        pasos.append(
+            "La ecuación tiene un único término cuadrático."
+        )
+
+        pasos.append(
+            "Por lo tanto corresponde a una parábola."
+        )
+
+        if A == 0:
+
+            pasos.append("")
+            pasos.append(
+                "Parábola horizontal."
+            )
+
+        else:
+
+            pasos.append("")
+            pasos.append(
+                "Parábola vertical."
+            )
+
+    return "\n".join(pasos)
+
+
+# =====================================================
 # RESUMEN COMPLETO
 # =====================================================
 
@@ -183,6 +282,14 @@ def generar_resumen_conica(d, v):
         E
     )
 
+    forma_canonica = obtener_forma_canonica(
+        A,
+        B,
+        C,
+        D,
+        E
+    )
+
     resumen = []
 
     resumen.append(procedimiento)
@@ -193,10 +300,14 @@ def generar_resumen_conica(d, v):
     resumen.append("====================================")
     resumen.append("")
 
-    resumen.append(f"Ecuación:")
+    resumen.append("Ecuación General:")
     resumen.append(ecuacion)
 
     resumen.append("")
+
     resumen.append(f"Tipo de cónica: {tipo}")
+
+    resumen.append("")
+    resumen.append(forma_canonica)
 
     return "\n".join(resumen)
