@@ -1,7 +1,3 @@
-
-
-
-
 from funciones import evaluar_funcion
 
 
@@ -20,7 +16,6 @@ def fmt(n):
     if isinstance(n, float):
 
         texto = str(round(n, 6))
-
         texto = texto.rstrip("0").rstrip(".")
 
         return texto
@@ -30,132 +25,6 @@ def fmt(n):
 
 # =========================================
 # TABLA DE VALORES
-# =========================================
-
-def tabla_valores(datos):
-
-    a = datos["a"]
-
-    print("\n===================================")
-    print(" EVIDENCIA COMPUTACIONAL ")
-    print("===================================")
-
-    print(f"\nPunto critico: a = {a}")
-
-    print("\nTabla de aproximacion:\n")
-
-    print(f"{'x':<15}{'f(x)':<20}")
-
-    print("-" * 35)
-
-    # =========================================
-    # VALORES IZQUIERDA
-    # =========================================
-
-    izquierda = [
-        a - 1,
-        a - 0.1,
-        a - 0.01,
-        a - 0.001
-    ]
-
-    # =========================================
-    # VALORES DERECHA
-    # =========================================
-
-    derecha = [
-        a + 0.001,
-        a + 0.01,
-        a + 0.1,
-        a + 1
-    ]
-
-    # =========================================
-    # MOSTRAR IZQUIERDA
-    # =========================================
-
-    print("\n--- Aproximacion por izquierda ---\n")
-
-    for x in izquierda:
-
-        y = evaluar_funcion(x, datos)
-
-        print(f"{fmt(x):<15}{fmt(y):<20}")
-
-    # =========================================
-    # PUNTO EXACTO
-    # =========================================
-
-    print("\n--- Punto critico ---\n")
-
-    y = evaluar_funcion(a, datos)
-
-    print(f"{fmt(a):<15}{fmt(y):<20}")
-
-    # =========================================
-    # MOSTRAR DERECHA
-    # =========================================
-
-    print("\n--- Aproximacion por derecha ---\n")
-
-    for x in derecha:
-
-        y = evaluar_funcion(x, datos)
-
-        print(f"{fmt(x):<15}{fmt(y):<20}")
-
-    # =========================================
-    # INTERPRETACION
-    # =========================================
-
-    print("\n===================================")
-    print(" INTERPRETACION ")
-    print("===================================")
-
-    tipo = datos["tipo"]
-
-    # =========================================
-    # REMOVIBLE
-    # =========================================
-
-    if tipo == "removible":
-
-        print("\nLos valores se acercan al mismo numero")
-
-        print("La funcion NO esta definida en x = a")
-
-        print("Existe discontinuidad removible")
-
-    # =========================================
-    # SALTO
-    # =========================================
-
-    elif tipo == "salto":
-
-        print("\nLos valores izquierdos y derechos")
-
-        print("se acercan a numeros distintos")
-
-        print("Existe discontinuidad de salto")
-
-    # =========================================
-    # INFINITA
-    # =========================================
-
-    elif tipo == "infinita":
-
-        print("\nLos valores crecen o decrecen")
-
-        print("sin limite cerca de x = a")
-
-        print("Existe discontinuidad infinita")
-
-        print(f"Asintota vertical: x = {a}")
-
-
-# =========================================
-# TABLA EN FORMATO LISTA
-# (UTIL PARA INTERFAZ GRAFICA)
 # =========================================
 
 def obtener_tabla(datos):
@@ -180,11 +49,83 @@ def obtener_tabla(datos):
 
         y = evaluar_funcion(x, datos)
 
-        fila = {
+        tabla.append({
             "x": fmt(x),
             "y": fmt(y)
-        }
-
-        tabla.append(fila)
+        })
 
     return tabla
+
+
+# =========================================
+# EXPLICACION DETALLADA
+# =========================================
+
+def generar_evidencia_texto(datos):
+
+    a = datos["a"]
+
+    texto = ""
+
+    texto += "===================================\n"
+    texto += "EVIDENCIA COMPUTACIONAL\n"
+    texto += "===================================\n\n"
+
+    texto += f"Punto crítico: a = {a}\n\n"
+
+    tabla = obtener_tabla(datos)
+
+    texto += f"{'x':<15}{'f(x)':<20}\n"
+    texto += "-" * 35 + "\n"
+
+    for fila in tabla:
+        texto += f"{fila['x']:<15}{fila['y']:<20}\n"
+
+    texto += "\n"
+
+    tipo = datos["tipo"]
+
+    if tipo == "removible":
+
+        texto += (
+            "Interpretación:\n"
+            "Los valores de la tabla se aproximan al mismo número\n"
+            "por ambos lados del punto crítico.\n\n"
+            "La función no está definida en x = a,\n"
+            "pero el límite sí existe.\n\n"
+            "Conclusión:\n"
+            "Discontinuidad removible.\n"
+        )
+
+    elif tipo == "salto":
+
+        texto += (
+            "Interpretación:\n"
+            "Los valores por izquierda y derecha se aproximan\n"
+            "a números distintos.\n\n"
+            "Conclusión:\n"
+            "Discontinuidad de salto.\n"
+            "El límite no existe.\n"
+        )
+
+    elif tipo == "infinita":
+
+        texto += (
+            "Interpretación:\n"
+            "Los valores crecen o decrecen sin límite\n"
+            "al acercarse al punto crítico.\n\n"
+            f"Asíntota vertical: x = {a}\n\n"
+            "Conclusión:\n"
+            "Discontinuidad infinita.\n"
+        )
+
+    return texto
+
+
+# =========================================
+# VERSION CONSOLA
+# =========================================
+
+def tabla_valores(datos):
+
+    print(generar_evidencia_texto(datos))

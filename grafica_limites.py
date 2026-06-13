@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 
 from funciones import evaluar_funcion
 
@@ -10,18 +9,28 @@ def graficar_funcion(datos):
 
     a = datos["a"]
 
-    x = np.linspace(a - 5, a + 5, 400)
-
+    x = []
     y = []
 
-    for valor in x:
+    inicio = a - 5
+    fin = a + 5
+
+    paso = 0.025
+
+    valor = inicio
+
+    while valor <= fin:
 
         resultado = evaluar_funcion(valor, datos)
 
+        x.append(valor)
+
         if resultado is None:
-            y.append(np.nan)
+            y.append(None)
         else:
             y.append(resultado)
+
+        valor += paso
 
     ax.plot(x, y)
 
@@ -31,6 +40,9 @@ def graficar_funcion(datos):
     )
 
     ax.set_title("Gráfica de la función")
+
+    ax.set_xlabel("x")
+    ax.set_ylabel("f(x)")
 
     ax.grid(True)
 

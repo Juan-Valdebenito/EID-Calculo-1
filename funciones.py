@@ -1,3 +1,7 @@
+# =====================================================
+# UTILIDADES
+# =====================================================
+
 def valor_absoluto(x):
 
     if x < 0:
@@ -6,122 +10,129 @@ def valor_absoluto(x):
     return x
 
 
-# =========================================
+# =====================================================
 # CONSTRUCCION DE FUNCION
-# =========================================
+# =====================================================
 
 def construir_funcion(d):
 
-    d1,d2,d3,d4,d5,d6,d7,d8 = d
+    d1, d2, d3, d4, d5, d6, d7, d8 = d
 
     a = d3
 
-    print("\n===================================")
-    print(" CONSTRUCCION FUNCION POR TRAMOS ")
-    print("===================================")
-
-    print(f"\nPunto de analisis:")
-    print(f"a = d3 = {a}")
-
     resto = d8 % 3
 
-    # =========================================
-    # CASO 1 -> REMOVIBLE
-    # =========================================
+    procedimiento = []
+
+    procedimiento.append("===================================")
+    procedimiento.append("CONSTRUCCION DE LA FUNCION")
+    procedimiento.append("===================================")
+    procedimiento.append("")
+    procedimiento.append(f"d3 = {d3}")
+    procedimiento.append(f"a = d3 = {a}")
+    procedimiento.append("")
+    procedimiento.append(f"d8 = {d8}")
+    procedimiento.append(f"{d8} % 3 = {resto}")
+    procedimiento.append("")
+
+    # =================================================
+    # REMOVIBLE
+    # =================================================
 
     if resto == 0:
 
-        print(f"\nd8 = {d8}")
-        print(f"{d8} % 3 = 0")
+        procedimiento.append(
+            "Como d8 es multiplo de 3 se genera una discontinuidad removible."
+        )
 
-        print("\nSe genera discontinuidad removible")
+        procedimiento.append("")
+        procedimiento.append(
+            f"f(x)=((x-{a})(x+{d1}))/(x-{a})"
+        )
 
-        print("\nFuncion:")
-        print(f"f(x) = ((x-{a})(x+{d1})) / (x-{a})")
+        procedimiento.append("")
+        procedimiento.append("Simplificacion manual:")
+        procedimiento.append(
+            f"f(x)=x+{d1}, con x ≠ {a}"
+        )
 
-        print("\nSimplificacion manual:")
-        print(f"f(x) = x + {d1}, con x ≠ {a}")
-
-        datos = {
+        return {
             "tipo": "removible",
             "a": a,
             "d1": d1,
-            "regla": f"d8 = {d8} → {d8}%3 = 0",
-            "funcion": f"((x-{a})(x+{d1}))/(x-{a})"
+            "funcion": f"((x-{a})(x+{d1}))/(x-{a})",
+            "regla": f"{d8}%3 = 0",
+            "procedimiento": "\n".join(procedimiento)
         }
 
-        return datos
-
-    # =========================================
-    # CASO 2 -> SALTO
-    # =========================================
+    # =================================================
+    # SALTO
+    # =================================================
 
     elif resto == 1:
 
-        print(f"\nd8 = {d8}")
-        print(f"{d8} % 3 = 1")
+        procedimiento.append(
+            "Como d8 deja residuo 1 se genera una discontinuidad de salto."
+        )
 
-        print("\nSe genera discontinuidad de salto")
+        procedimiento.append("")
+        procedimiento.append("Funcion por tramos:")
+        procedimiento.append(
+            f"f(x)=x+{d2} si x<{a}"
+        )
 
-        print("\nFuncion:")
+        procedimiento.append(
+            f"f(x)=x+{d4} si x≥{a}"
+        )
 
-        print(f"""
-f(x) =
-
-x + {d2}      si x < {a}
-
-x + {d4}      si x >= {a}
-""")
-
-        datos = {
+        return {
             "tipo": "salto",
             "a": a,
             "d2": d2,
             "d4": d4,
-            "regla": f"d8 = {d8} → {d8}%3 = 1",
             "funcion":
-                f"x + {d2} si x < {a}\n"
-                f"x + {d4} si x ≥ {a}"
+                f"x+{d2} si x<{a}\n"
+                f"x+{d4} si x≥{a}",
+            "regla": f"{d8}%3 = 1",
+            "procedimiento": "\n".join(procedimiento)
         }
 
-        return datos
-
-    # =========================================
-    # CASO 3 -> INFINITA
-    # =========================================
+    # =================================================
+    # INFINITA
+    # =================================================
 
     else:
 
-        print(f"\nd8 = {d8}")
-        print(f"{d8} % 3 = 2")
+        procedimiento.append(
+            "Como d8 deja residuo 2 se genera una discontinuidad infinita."
+        )
 
-        print("\nSe genera discontinuidad infinita")
+        procedimiento.append("")
+        procedimiento.append(
+            f"f(x)=({d5+1})/(x-{a})"
+        )
 
-        print("\nFuncion:")
-        print(f"f(x) = ({d5}+1)/(x-{a})")
-
-        datos = {
+        return {
             "tipo": "infinita",
             "a": a,
             "numerador": d5 + 1,
-            "regla": f"d8 = {d8} → {d8}%3 = 2",
-            "funcion": f"{d5+1}/(x-{a})"
+            "funcion": f"({d5+1})/(x-{a})",
+            "regla": f"{d8}%3 = 2",
+            "procedimiento": "\n".join(procedimiento)
         }
 
-        return datos
 
-
-# =========================================
+# =====================================================
 # EVALUAR FUNCION
-# =========================================
+# =====================================================
 
 def evaluar_funcion(x, datos):
 
     tipo = datos["tipo"]
 
-    # =========================================
+    # ==============================================
     # REMOVIBLE
-    # =========================================
+    # ==============================================
 
     if tipo == "removible":
 
@@ -136,267 +147,238 @@ def evaluar_funcion(x, datos):
 
         return numerador / denominador
 
-    # =========================================
+    # ==============================================
     # SALTO
-    # =========================================
+    # ==============================================
 
     elif tipo == "salto":
 
         a = datos["a"]
-        d2 = datos["d2"]
-        d4 = datos["d4"]
 
         if x < a:
-            return x + d2
+            return x + datos["d2"]
 
-        return x + d4
+        return x + datos["d4"]
 
-    # =========================================
+    # ==============================================
     # INFINITA
-    # =========================================
+    # ==============================================
 
     elif tipo == "infinita":
 
         a = datos["a"]
-        numerador = datos["numerador"]
 
         if x == a:
             return None
 
-        return numerador / (x - a)
+        return datos["numerador"] / (x - a)
+
+    return None
 
 
-# =========================================
-# LIMITES LATERALES
-# =========================================
+# =====================================================
+# LIMITE IZQUIERDA
+# =====================================================
 
 def limite_izquierda(datos):
 
     tipo = datos["tipo"]
     a = datos["a"]
 
-    # =========================================
-    # REMOVIBLE
-    # =========================================
-
     if tipo == "removible":
 
-        d1 = datos["d1"]
-
-        limite = a + d1
-
-        print("\nLimite por izquierda:")
-
-        print(f"""
-lim x→{a}⁻ ((x-{a})(x+{d1}))/(x-{a})
-
-= lim x→{a}⁻ (x+{d1})
-
-= {a}+{d1}
-
-= {limite}
-""")
-
-        return limite
-
-    # =========================================
-    # SALTO
-    # =========================================
+        return a + datos["d1"]
 
     elif tipo == "salto":
 
-        d2 = datos["d2"]
-
-        limite = a + d2
-
-        print("\nLimite por izquierda:")
-
-        print(f"""
-lim x→{a}⁻ (x+{d2})
-
-= {a}+{d2}
-
-= {limite}
-""")
-
-        return limite
-
-    # =========================================
-    # INFINITA
-    # =========================================
+        return a + datos["d2"]
 
     elif tipo == "infinita":
 
-        numerador = datos["numerador"]
-
-        print("\nLimite por izquierda:")
-
-        print(f"""
-lim x→{a}⁻ {numerador}/(x-{a})
-""")
-
-        if numerador > 0:
-
-            print("El denominador se acerca a 0 negativo")
-
-            print("Resultado → -∞")
-
+        if datos["numerador"] > 0:
             return "-∞"
 
-        else:
-
-            print("Resultado → +∞")
-
-            return "+∞"
+        return "+∞"
 
 
-# =========================================
+# =====================================================
 # LIMITE DERECHA
-# =========================================
+# =====================================================
 
 def limite_derecha(datos):
 
     tipo = datos["tipo"]
     a = datos["a"]
 
-    # =========================================
-    # REMOVIBLE
-    # =========================================
-
     if tipo == "removible":
 
-        d1 = datos["d1"]
-
-        limite = a + d1
-
-        print("\nLimite por derecha:")
-
-        print(f"""
-lim x→{a}⁺ ((x-{a})(x+{d1}))/(x-{a})
-
-= lim x→{a}⁺ (x+{d1})
-
-= {a}+{d1}
-
-= {limite}
-""")
-
-        return limite
-
-    # =========================================
-    # SALTO
-    # =========================================
+        return a + datos["d1"]
 
     elif tipo == "salto":
 
-        d4 = datos["d4"]
-
-        limite = a + d4
-
-        print("\nLimite por derecha:")
-
-        print(f"""
-lim x→{a}⁺ (x+{d4})
-
-= {a}+{d4}
-
-= {limite}
-""")
-
-        return limite
-
-    # =========================================
-    # INFINITA
-    # =========================================
+        return a + datos["d4"]
 
     elif tipo == "infinita":
 
-        numerador = datos["numerador"]
-
-        print("\nLimite por derecha:")
-
-        print(f"""
-lim x→{a}⁺ {numerador}/(x-{a})
-""")
-
-        if numerador > 0:
-
-            print("El denominador se acerca a 0 positivo")
-
-            print("Resultado → +∞")
-
+        if datos["numerador"] > 0:
             return "+∞"
 
-        else:
-
-            print("Resultado → -∞")
-
-            return "-∞"
+        return "-∞"
 
 
-# =========================================
+# =====================================================
+# VALOR FUNCION
+# =====================================================
+
+def valor_funcion_en_punto(datos):
+
+    a = datos["a"]
+
+    return evaluar_funcion(a, datos)
+
+
+# =====================================================
+# EXISTE LIMITE
+# =====================================================
+
+def existe_limite(datos):
+
+    izquierda = limite_izquierda(datos)
+    derecha = limite_derecha(datos)
+
+    return izquierda == derecha
+
+
+# =====================================================
+# CONTINUIDAD
+# =====================================================
+
+def es_continua(datos):
+
+    limite = existe_limite(datos)
+
+    valor = valor_funcion_en_punto(datos)
+
+    if not limite:
+        return False
+
+    if valor is None:
+        return False
+
+    return valor == limite_izquierda(datos)
+
+
+# =====================================================
+# JUSTIFICACION MATEMATICA
+# =====================================================
+
+def justificar(datos):
+
+    tipo = datos["tipo"]
+
+    izq = limite_izquierda(datos)
+    der = limite_derecha(datos)
+
+    texto = []
+
+    texto.append("===================================")
+    texto.append("JUSTIFICACION MATEMATICA")
+    texto.append("===================================")
+    texto.append("")
+
+    if tipo == "removible":
+
+        texto.append(
+            f"Limite izquierdo = {izq}"
+        )
+
+        texto.append(
+            f"Limite derecho = {der}"
+        )
+
+        texto.append("")
+
+        texto.append(
+            "Los limites laterales son iguales."
+        )
+
+        texto.append(
+            "Por lo tanto el limite existe."
+        )
+
+        texto.append(
+            "La funcion no esta definida en el punto."
+        )
+
+        texto.append(
+            "Corresponde a una discontinuidad removible."
+        )
+
+    elif tipo == "salto":
+
+        texto.append(
+            f"Limite izquierdo = {izq}"
+        )
+
+        texto.append(
+            f"Limite derecho = {der}"
+        )
+
+        texto.append("")
+
+        texto.append(
+            "Los limites laterales son distintos."
+        )
+
+        texto.append(
+            "Por lo tanto el limite no existe."
+        )
+
+        texto.append(
+            "Corresponde a una discontinuidad de salto."
+        )
+
+    else:
+
+        texto.append(
+            f"Limite izquierdo = {izq}"
+        )
+
+        texto.append(
+            f"Limite derecho = {der}"
+        )
+
+        texto.append("")
+
+        texto.append(
+            "La funcion diverge al infinito."
+        )
+
+        texto.append(
+            "Existe una asintota vertical."
+        )
+
+        texto.append(
+            "Corresponde a una discontinuidad infinita."
+        )
+
+    return "\n".join(texto)
+
+
+# =====================================================
 # ANALISIS COMPLETO
-# =========================================
+# =====================================================
 
 def analizar_limites(d):
 
     datos = construir_funcion(d)
 
-    izquierda = limite_izquierda(datos)
-
-    derecha = limite_derecha(datos)
-
-    print("\n===================================")
-    print(" ANALISIS FINAL ")
-    print("===================================")
-
-    print(f"\nLimite izquierda = {izquierda}")
-    print(f"Limite derecha = {derecha}")
-
-    tipo = datos["tipo"]
-
-    # =========================================
-    # REMOVIBLE
-    # =========================================
-
-    if tipo == "removible":
-
-        print("\nLos limites laterales son iguales")
-
-        print("El limite SI existe")
-
-        print("La discontinuidad es removible")
-
-    # =========================================
-    # SALTO
-    # =========================================
-
-    elif tipo == "salto":
-
-        if izquierda == derecha:
-
-            print("\nLos limites son iguales")
-
-            print("El limite existe")
-
-        else:
-
-            print("\nLos limites son distintos")
-
-            print("El limite NO existe")
-
-            print("Discontinuidad de salto")
-
-    # =========================================
-    # INFINITA
-    # =========================================
-
-    elif tipo == "infinita":
-
-        print("\nLa funcion crece sin limite")
-
-        print("Existe discontinuidad infinita")
-
-        print(f"Asintota vertical: x = {datos['a']}")
-
-    return datos
+    return {
+        "datos": datos,
+        "izquierda": limite_izquierda(datos),
+        "derecha": limite_derecha(datos),
+        "valor_funcion": valor_funcion_en_punto(datos),
+        "existe_limite": existe_limite(datos),
+        "continua": es_continua(datos),
+        "justificacion": justificar(datos)
+    }
