@@ -1,223 +1,233 @@
-def es_cero(n):
-    return abs(n) < 0.0000001
+# =====================================================
+# FORMATEO DE NÚMEROS
+# =====================================================
+
+def fmt(valor):
+
+    if int(valor) == valor:
+        return str(int(valor))
+
+    return str(round(valor, 2))
 
 
-def fmt(n):
-    if es_cero(n):
-        n = 0
+# =====================================================
+# ECUACIÓN GENERAL
+# =====================================================
 
-    if isinstance(n, float) and n.is_integer():
-        return str(int(n))
+def ecuacion_general(A, B, C, D, E):
 
-    texto = str(round(n, 6))
-    texto = texto.rstrip("0").rstrip(".")
+    texto = ""
+
+    # Término x²
+    if A != 0:
+        texto += f"{fmt(A)}x² "
+
+    # Término y²
+    if B > 0:
+        texto += f"+ {fmt(B)}y² "
+
+    elif B < 0:
+        texto += f"- {fmt(abs(B))}y² "
+
+    # Término x
+    if C > 0:
+        texto += f"+ {fmt(C)}x "
+
+    elif C < 0:
+        texto += f"- {fmt(abs(C))}x "
+
+    # Término y
+    if D > 0:
+        texto += f"+ {fmt(D)}y "
+
+    elif D < 0:
+        texto += f"- {fmt(abs(D))}y "
+
+    # Constante
+    if E > 0:
+        texto += f"+ {fmt(E)} "
+
+    elif E < 0:
+        texto += f"- {fmt(abs(E))} "
+
+    texto += "= 0"
+
     return texto
 
 
-def termino(coeficiente, variable):
-    if es_cero(coeficiente):
+# =====================================================
+# FORMA CANÓNICA
+# =====================================================
+
+def forma_canonica(A, B, C, D, E):
+
+    texto = []
+
+    texto.append("====================================")
+    texto.append(" FORMA CANÓNICA")
+    texto.append("====================================")
+    texto.append("")
+
+    # =====================================
+    # CIRCUNFERENCIA / ELIPSE
+    # =====================================
+
+    if A != 0 and B != 0 and A * B > 0:
+
+        h = -C / (2 * A)
+        k = -D / (2 * B)
+
+        constante = (
+            -E
+            + (C ** 2) / (4 * A)
+            + (D ** 2) / (4 * B)
+        )
+
+        texto.append("Completando cuadrados:")
+        texto.append("")
+
+        texto.append(f"Centro = ({fmt(h)}, {fmt(k)})")
+        texto.append("")
+
+        if A == B:
+
+            radio2 = constante / A
+
+            if radio2 > 0:
+
+                radio = radio2 ** 0.5
+
+                texto.append("Circunferencia")
+                texto.append("")
+
+                texto.append(
+                    f"(x-{fmt(h)})² + (y-{fmt(k)})² = {fmt(radio2)}"
+                )
+
+                texto.append("")
+                texto.append(f"Radio = {fmt(radio)}")
+
+        else:
+
+            a2 = abs(constante / A)
+            b2 = abs(constante / B)
+
+            texto.append("Elipse")
+            texto.append("")
+
+            texto.append(
+                f"(x-{fmt(h)})²/{fmt(a2)} + (y-{fmt(k)})²/{fmt(b2)} = 1"
+            )
+
+            texto.append("")
+            texto.append(f"a² = {fmt(a2)}")
+            texto.append(f"b² = {fmt(b2)}")
+
+    # =====================================
+    # HIPÉRBOLA
+    # =====================================
+
+    elif A != 0 and B != 0 and A * B < 0:
+
+        h = -C / (2 * A)
+        k = -D / (2 * B)
+
+        constante = (
+            -E
+            + (C ** 2) / (4 * A)
+            + (D ** 2) / (4 * B)
+        )
+
+        a2 = abs(constante / A)
+        b2 = abs(constante / B)
+
+        texto.append("Hipérbola")
+        texto.append("")
+
+        texto.append(f"Centro = ({fmt(h)}, {fmt(k)})")
+        texto.append("")
+
+        texto.append(
+            f"(x-{fmt(h)})²/{fmt(a2)} - (y-{fmt(k)})²/{fmt(b2)} = 1"
+        )
+
+        texto.append("")
+        texto.append(f"a² = {fmt(a2)}")
+        texto.append(f"b² = {fmt(b2)}")
+
+    # =====================================
+    # PARÁBOLA
+    # =====================================
+
+    else:
+
+        texto.append("Parábola")
+        texto.append("")
+
+        if A == 0:
+
+            k = -D / (2 * B)
+
+            texto.append(
+                "Orientación horizontal"
+            )
+
+            texto.append("")
+            texto.append(
+                f"Vértice aproximado = (0 , {fmt(k)})"
+            )
+
+        else:
+
+            h = -C / (2 * A)
+
+            texto.append(
+                "Orientación vertical"
+            )
+
+            texto.append("")
+            texto.append(
+                f"Vértice aproximado = ({fmt(h)} , 0)"
+            )
+
+    return "\n".join(texto)
+
+
+# =====================================================
+# CENTRO DE LA CÓNICA
+# =====================================================
+
+def obtener_centro(A, B, C, D):
+
+    if A == 0 or B == 0:
         return None
 
-    signo = "+" if coeficiente > 0 else "-"
-    valor = abs(coeficiente)
-
-    if variable != "" and abs(valor - 1) < 0.0000001:
-        cuerpo = variable
-    elif variable == "":
-        cuerpo = fmt(valor)
-    else:
-        cuerpo = f"{fmt(valor)}{variable}"
-
-    return signo, cuerpo
-
-
-def ecuacion_general(A, B, C, D, E):
-    datos = [
-        (A, "x²"),
-        (B, "y²"),
-        (C, "x"),
-        (D, "y"),
-        (E, "")
-    ]
-
-    terminos = []
-
-    for coeficiente, variable in datos:
-        t = termino(coeficiente, variable)
-        if t is not None:
-            terminos.append(t)
-
-    if len(terminos) == 0:
-        return "0 = 0"
-
-    signo, cuerpo = terminos[0]
-
-    if signo == "-":
-        texto = f"-{cuerpo}"
-    else:
-        texto = cuerpo
-
-    for signo, cuerpo in terminos[1:]:
-        texto += f" {signo} {cuerpo}"
-
-    return texto + " = 0"
-
-
-def binomio(variable, centro):
-    if es_cero(centro):
-        return variable
-
-    if centro > 0:
-        return f"({variable} - {fmt(centro)})"
-
-    return f"({variable} + {fmt(abs(centro))})"
-
-
-def forma_canonica(A, B, C, D, E, mostrar_elementos=True):
-    print("Ecuación general recibida:")
-    print(ecuacion_general(A, B, C, D, E))
-
-    if es_cero(A) and not es_cero(B):
-        parabola_horizontal(B, C, D, E, mostrar_elementos)
-
-    elif es_cero(B) and not es_cero(A):
-        parabola_vertical(A, C, D, E, mostrar_elementos)
-
-    elif not es_cero(A) and not es_cero(B):
-        conica_central(A, B, C, D, E, mostrar_elementos)
-
-    else:
-        print("No se puede transformar: A y B son ambos cero.")
-
-
-def parabola_horizontal(B, C, D, E, mostrar_elementos=True):
-    print("\nComo A = 0 y B ≠ 0, la cónica es una parábola horizontal.")
-    print("Forma general:")
-    print(ecuacion_general(0, B, C, D, E))
-
-    k = -D / (2 * B)
-
-    print("\nCompletamos cuadrado en y:")
-    print(f"k = -D/(2B) = -({fmt(D)}) / (2·{fmt(B)}) = {fmt(k)}")
-
-    constante = E - B * (k ** 2)
-
-    print("\nReescritura:")
-    print(f"{fmt(B)}{binomio('y', k)}² + ({fmt(C)})x + {fmt(constante)} = 0")
-
-    h = -constante / C
-    cuatro_p = -C / B
-    p = cuatro_p / 4
-
-    print("\nDespejamos a forma canónica:")
-    print(f"{binomio('y', k)}² = {fmt(cuatro_p)}{binomio('x', h)}")
-
-    if mostrar_elementos:
-        print("\nElementos principales:")
-        print(f"Vértice: V({fmt(h)}, {fmt(k)})")
-        print(f"4p = {fmt(cuatro_p)}")
-        print(f"p = {fmt(p)}")
-        print(f"Foco: F({fmt(h + p)}, {fmt(k)})")
-        print(f"Directriz: x = {fmt(h - p)}")
-
-        if p > 0:
-            print("La parábola abre hacia la derecha.")
-        else:
-            print("La parábola abre hacia la izquierda.")
-
-
-def parabola_vertical(A, C, D, E, mostrar_elementos=True):
-    print("\nComo B = 0 y A ≠ 0, la cónica es una parábola vertical.")
-    print("Forma general:")
-    print(ecuacion_general(A, 0, C, D, E))
-
-    h = -C / (2 * A)
-
-    print("\nCompletamos cuadrado en x:")
-    print(f"h = -C/(2A) = -({fmt(C)}) / (2·{fmt(A)}) = {fmt(h)}")
-
-    constante = E - A * (h ** 2)
-
-    print("\nReescritura:")
-    print(f"{fmt(A)}{binomio('x', h)}² + ({fmt(D)})y + {fmt(constante)} = 0")
-
-    k = -constante / D
-    cuatro_p = -D / A
-    p = cuatro_p / 4
-
-    print("\nDespejamos a forma canónica:")
-    print(f"{binomio('x', h)}² = {fmt(cuatro_p)}{binomio('y', k)}")
-
-    if mostrar_elementos:
-        print("\nElementos principales:")
-        print(f"Vértice: V({fmt(h)}, {fmt(k)})")
-        print(f"4p = {fmt(cuatro_p)}")
-        print(f"p = {fmt(p)}")
-        print(f"Foco: F({fmt(h)}, {fmt(k + p)})")
-        print(f"Directriz: y = {fmt(k - p)}")
-
-        if p > 0:
-            print("La parábola abre hacia arriba.")
-        else:
-            print("La parábola abre hacia abajo.")
-
-
-def conica_central(A, B, C, D, E, mostrar_elementos=True):
-    print("\nComo A ≠ 0 y B ≠ 0, completamos cuadrados en x e y.")
-
     h = -C / (2 * A)
     k = -D / (2 * B)
 
-    print(f"h = -C/(2A) = -({fmt(C)}) / (2·{fmt(A)}) = {fmt(h)}")
-    print(f"k = -D/(2B) = -({fmt(D)}) / (2·{fmt(B)}) = {fmt(k)}")
+    return (h, k)
 
-    constante = E - A * (h ** 2) - B * (k ** 2)
 
-    print("\nReescritura:")
-    print(f"{fmt(A)}{binomio('x', h)}² + {fmt(B)}{binomio('y', k)}² + {fmt(constante)} = 0")
+# =====================================================
+# RESUMEN COMPLETO
+# =====================================================
 
-    lado_derecho = -constante
+def resumen_transformacion(A, B, C, D, E):
 
-    print("\nPasamos la constante al otro lado:")
-    print(f"{fmt(A)}{binomio('x', h)}² + {fmt(B)}{binomio('y', k)}² = {fmt(lado_derecho)}")
+    texto = []
 
-    if es_cero(A - B):
-        radio_cuadrado = lado_derecho / A
+    texto.append("====================================")
+    texto.append(" ECUACIÓN GENERAL")
+    texto.append("====================================")
+    texto.append("")
 
-        print("\nForma canónica de circunferencia:")
-        print(f"{binomio('x', h)}² + {binomio('y', k)}² = {fmt(radio_cuadrado)}")
+    texto.append(
+        ecuacion_general(A, B, C, D, E)
+    )
 
-        if mostrar_elementos:
-            print("\nElementos principales:")
-            print(f"Centro: C({fmt(h)}, {fmt(k)})")
-            print(f"Radio² = {fmt(radio_cuadrado)}")
+    texto.append("")
+    texto.append(
+        forma_canonica(A, B, C, D, E)
+    )
 
-    elif A * B > 0:
-        denom_x = lado_derecho / A
-        denom_y = lado_derecho / B
-
-        print("\nForma canónica de elipse:")
-        print(f"{binomio('x', h)}²/{fmt(denom_x)} + {binomio('y', k)}²/{fmt(denom_y)} = 1")
-
-        if mostrar_elementos:
-            print("\nElementos principales:")
-            print(f"Centro: C({fmt(h)}, {fmt(k)})")
-            print(f"Denominador bajo x: {fmt(denom_x)}")
-            print(f"Denominador bajo y: {fmt(denom_y)}")
-
-    else:
-        denom_x = lado_derecho / A
-        denom_y = lado_derecho / B
-
-        print("\nForma canónica de hipérbola:")
-
-        if denom_x > 0:
-            print(f"{binomio('x', h)}²/{fmt(denom_x)} - {binomio('y', k)}²/{fmt(abs(denom_y))} = 1")
-        else:
-            print(f"{binomio('y', k)}²/{fmt(denom_y)} - {binomio('x', h)}²/{fmt(abs(denom_x))} = 1")
-
-        if mostrar_elementos:
-            print("\nElementos principales:")
-            print(f"Centro: C({fmt(h)}, {fmt(k)})")
-            print(f"Denominador bajo x: {fmt(abs(denom_x))}")
-            print(f"Denominador bajo y: {fmt(abs(denom_y))}")
+    return "\n".join(texto)

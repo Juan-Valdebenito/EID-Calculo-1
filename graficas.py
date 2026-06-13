@@ -1,5 +1,10 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
+
+# =====================================================
+# UTILIDADES
+# =====================================================
 
 def valor_absoluto(x):
 
@@ -9,328 +14,306 @@ def valor_absoluto(x):
     return x
 
 
-def raiz_aproximada(n):
-
-    if n < 0:
-        return None
-
-    if n == 0:
-        return 0
-
-    x = n
-
-    for _ in range(20):
-        x = (x + n / x) / 2
-
-    return x
-
-
 # =====================================================
-# GRAFICAR CONICA
-# =====================================================
-
-def graficar_conica(tipo, datos):
-
-    fig, ax = plt.subplots(figsize=(7, 7))
-
-    ax.axhline(0, color='black', linewidth=0.8)
-    ax.axvline(0, color='black', linewidth=0.8)
-    ax.set_title(f"Gráfica de la {tipo.capitalize()}")
-    ax.grid(True, linestyle='--', alpha=0.7)
-
-    # =================================================
-    # CIRCUNFERENCIA / ELIPSE 
-    # =================================================
-
-    if tipo == "circunferencia" or tipo == "elipse":
-        h, k, a2, b2 = datos["h"], datos["k"], datos["a2"], datos["b2"]
-
-        if a2 <= 0 or b2 <= 0:
-            return fig
-
-        inicio = h - raiz_aproximada(a2)
-        fin = h + raiz_aproximada(a2)
-
-        x_arriba, y_arriba = [], []
-        x_abajo, y_abajo = [], []
-        x = inicio
-
-        while x <= fin:
-            parte = 1 - ((x - h) ** 2) / a2
-            if parte >= 0:
-                y = raiz_aproximada(parte * b2)
-                if y is not None:
-                    x_arriba.append(x)
-                    y_arriba.append(k + y)
-
-                    x_abajo.insert(0, x)
-                    y_abajo.insert(0, k - y)
-            x += 0.02
-
-        puntos_x = x_arriba + x_abajo + [x_arriba[0]]
-        puntos_y = y_arriba + y_abajo + [y_arriba[0]]
-
-        color_conica = 'blue' if tipo == "circunferencia" else 'purple'
-        ax.plot(puntos_x, puntos_y, color=color_conica, linestyle='-', linewidth=2)
-        ax.set_aspect('equal')
-
-    # =================================================
-    # HIPERBOLA 
-    # =================================================
-
-    elif tipo == "hipérbola":
-        h, k, a2, b2 = datos["h"], datos["k"], datos["a2"], datos["b2"]
-        orientacion = datos["orientacion"]
-
-        if a2 <= 0 or b2 <= 0:
-            return fig
-
-        a = raiz_aproximada(a2)
-        b = raiz_aproximada(b2)
-        
-        # Limitamos el dibujo a 15 unidades desde el vértice para que el zoom sea perfecto
-        rango_dibujo = 15  
-        paso = 0.1
-
-        if orientacion == "horizontal":
-            x = h + a
-            x_der, y_der_arriba, y_der_abajo = [], [], []
-            while x <= h + a + rango_dibujo:
-                parte = ((x - h)**2) / a2 - 1
-                if parte >= 0:
-                    y = raiz_aproximada(parte * b2)
-                    x_der.append(x)
-                    y_der_arriba.append(k + y)
-                    y_der_abajo.append(k - y)
-                x += paso
-            
-            rama_1_x = list(reversed(x_der)) + x_der
-            rama_1_y = list(reversed(y_der_abajo)) + y_der_arriba
-            
-            x = h - a
-            x_izq, y_izq_arriba, y_izq_abajo = [], [], []
-            while x >= h - a - rango_dibujo: 
-                parte = ((x - h)**2) / a2 - 1
-                if parte >= 0:
-                    y = raiz_aproximada(parte * b2)
-                    x_izq.append(x)
-                    y_izq_arriba.append(k + y)
-                    y_izq_abajo.append(k - y)
-                x -= paso
-
-            rama_2_x = list(reversed(x_izq)) + x_izq
-            rama_2_y = list(reversed(y_izq_abajo)) + y_izq_arriba
-            
-            pendiente = b / a
-            lim_x_min = h - a - rango_dibujo
-            lim_x_max = h + a + rango_dibujo
-
-            asintota_1_x = [lim_x_min, lim_x_max]
-            asintota_1_y = [pendiente * (lim_x_min - h) + k, pendiente * (lim_x_max - h) + k]
-            
-            asintota_2_x = [lim_x_min, lim_x_max]
-            asintota_2_y = [-pendiente * (lim_x_min - h) + k, -pendiente * (lim_x_max - h) + k]
-
-        else: 
-            y = k + a
-            y_arr, x_arr_der, x_arr_izq = [], [], []
-            while y <= k + a + rango_dibujo:
-                parte = ((y - k)**2) / a2 - 1
-                if parte >= 0:
-                    x_val = raiz_aproximada(parte * b2)
-                    y_arr.append(y)
-                    x_arr_der.append(h + x_val)
-                    x_arr_izq.append(h - x_val)
-                y += paso
-                
-            rama_1_y = list(reversed(y_arr)) + y_arr
-            rama_1_x = list(reversed(x_arr_izq)) + x_arr_der
-
-            y = k - a
-            y_aba, x_aba_der, x_aba_izq = [], [], []
-            while y >= k - a - rango_dibujo:
-                parte = ((y - k)**2) / a2 - 1
-                if parte >= 0:
-                    x_val = raiz_aproximada(parte * b2)
-                    y_aba.append(y)
-                    x_aba_der.append(h + x_val)
-                    x_aba_izq.append(h - x_val)
-                y -= paso
-                
-            rama_2_y = list(reversed(y_aba)) + y_aba
-            rama_2_x = list(reversed(x_aba_izq)) + x_aba_der
-            
-            pendiente = a / b 
-            lim_y_min = k - a - rango_dibujo
-            lim_y_max = k + a + rango_dibujo
-            
-            asintota_1_x = [(lim_y_min - k) / pendiente + h, (lim_y_max - k) / pendiente + h]
-            asintota_1_y = [lim_y_min, lim_y_max]
-            
-            asintota_2_x = [(lim_y_min - k) / (-pendiente) + h, (lim_y_max - k) / (-pendiente) + h]
-            asintota_2_y = [lim_y_min, lim_y_max]
-
-
-        ax.plot(rama_1_x, rama_1_y, color='red', linestyle='-', linewidth=2)
-        ax.plot(rama_2_x, rama_2_y, color='red', linestyle='-', linewidth=2)
-        
-        ax.plot(asintota_1_x, asintota_1_y, color='gray', linestyle='--', linewidth=1.5, alpha=0.6)
-        ax.plot(asintota_2_x, asintota_2_y, color='gray', linestyle='--', linewidth=1.5, alpha=0.6)
-        
-        ax.set_aspect('auto')
-
-    # =================================================
-    # PARABOLA 
-    # =================================================
-
-    elif tipo == "parábola":
-        h, k, p, orientacion = datos["h"], datos["k"], datos["p"], datos["orientacion"]
-
-        if p == 0:
-            return fig
-
-        puntos_x, puntos_y = [], []
-        t = -20
-
-        while t <= 20:
-            if orientacion == "vertical":
-                puntos_x.append(h + t)
-                puntos_y.append(k + (t ** 2) / (4 * p))
-            else:
-                puntos_y.append(k + t)
-                puntos_x.append(h + (t ** 2) / (4 * p))
-            t += 0.1
-
-        ax.plot(puntos_x, puntos_y, color='green', linestyle='-', linewidth=2)
-        ax.set_aspect('auto') 
-
-    return fig
-
-
-# =====================================================
-# GRAFICAR DESDE ECUACION
+# GRAFICAR DESDE ECUACIÓN
 # =====================================================
 
 def graficar_desde_ecuacion(tipo, A, B, C, D, E):
 
-    # =================================================
-    # CIRCUNFERENCIA / ELIPSE
-    # =================================================
+    fig, ax = plt.subplots(figsize=(7, 7))
 
-    if tipo == "circunferencia" or tipo == "elipse":
+    ax.axhline(0, color="black", linewidth=0.8)
+    ax.axvline(0, color="black", linewidth=0.8)
 
-        if A == 0 or B == 0:
-            return None
+    ax.grid(True)
+
+    ax.set_title(f"{tipo.capitalize()}")
+
+    # =========================================
+    # CIRCUNFERENCIA
+    # =========================================
+
+    if tipo == "circunferencia":
 
         h = -C / (2 * A)
-
         k = -D / (2 * B)
 
         constante = (
             -E
-            + (C ** 2) / (4 * A)
-            + (D ** 2) / (4 * B)
+            + (C**2)/(4*A)
+            + (D**2)/(4*B)
         )
 
-        a2 = constante / A
+        radio2 = constante / A
 
-        b2 = constante / B
+        if radio2 <= 0:
+            return fig
 
-        datos = {
-            "h": h,
-            "k": k,
-            "a2": valor_absoluto(a2),
-            "b2": valor_absoluto(b2)
-        }
+        radio = np.sqrt(radio2)
 
-        return graficar_conica(tipo, datos)
+        t = np.linspace(0, 2*np.pi, 500)
 
-    # =================================================
-    # HIPERBOLA
-    # =================================================
+        x = h + radio*np.cos(t)
+        y = k + radio*np.sin(t)
+
+        ax.plot(x, y, linewidth=2)
+
+        # Centro
+
+        ax.plot(
+            h,
+            k,
+            marker="o",
+            markersize=8
+        )
+
+        ax.annotate(
+            f"Centro ({round(h,2)}, {round(k,2)})",
+            (h, k)
+        )
+
+        ax.set_aspect("equal")
+
+    # =========================================
+    # ELIPSE
+    # =========================================
+
+    elif tipo == "elipse":
+
+        h = -C / (2*A)
+        k = -D / (2*B)
+
+        constante = (
+            -E
+            + (C**2)/(4*A)
+            + (D**2)/(4*B)
+        )
+
+        a2 = abs(constante / A)
+        b2 = abs(constante / B)
+
+        a = np.sqrt(a2)
+        b = np.sqrt(b2)
+
+        t = np.linspace(0, 2*np.pi, 500)
+
+        x = h + a*np.cos(t)
+        y = k + b*np.sin(t)
+
+        ax.plot(x, y, linewidth=2)
+
+        ax.plot(h, k, marker="o")
+
+        ax.annotate(
+            f"Centro ({round(h,2)}, {round(k,2)})",
+            (h, k)
+        )
+
+        # Focos
+
+        if a >= b:
+
+            c = np.sqrt(a*a - b*b)
+
+            foco1 = (h-c, k)
+            foco2 = (h+c, k)
+
+        else:
+
+            c = np.sqrt(b*b - a*a)
+
+            foco1 = (h, k-c)
+            foco2 = (h, k+c)
+
+        ax.plot(foco1[0], foco1[1], marker="x")
+        ax.plot(foco2[0], foco2[1], marker="x")
+
+        ax.annotate("F1", foco1)
+        ax.annotate("F2", foco2)
+
+        ax.set_aspect("equal")
+
+    # =========================================
+    # HIPÉRBOLA
+    # =========================================
 
     elif tipo == "hipérbola":
 
-        if A == 0 or B == 0:
-            return None
-
-        h = -C / (2 * A)
-
-        k = -D / (2 * B)
+        h = -C/(2*A)
+        k = -D/(2*B)
 
         constante = (
             -E
-            + (C ** 2) / (4 * A)
-            + (D ** 2) / (4 * B)
+            + (C**2)/(4*A)
+            + (D**2)/(4*B)
         )
 
-        if constante == 0:
+        a2 = abs(constante / A)
+        b2 = abs(constante / B)
 
-            return None
+        a = np.sqrt(a2)
+        b = np.sqrt(b2)
 
-        a2 = valor_absoluto(constante / A)
+        ax.plot(
+            h,
+            k,
+            marker="o"
+        )
 
-        b2 = valor_absoluto(constante / B)
+        ax.annotate(
+            f"Centro ({round(h,2)}, {round(k,2)})",
+            (h, k)
+        )
+
+        x = np.linspace(
+            h - 20,
+            h + 20,
+            4000
+        )
 
         if A > 0:
-            orientacion = "horizontal"
+
+            parte = ((x-h)**2)/a2 - 1
+
+            y1 = []
+            y2 = []
+
+            for valor in parte:
+
+                if valor >= 0:
+
+                    y = np.sqrt(valor*b2)
+
+                    y1.append(k+y)
+                    y2.append(k-y)
+
+                else:
+
+                    y1.append(np.nan)
+                    y2.append(np.nan)
+
+            ax.plot(x, y1)
+            ax.plot(x, y2)
+
+            # Asíntotas
+
+            m = b/a
+
+            xa = np.array([h-20, h+20])
+
+            ax.plot(
+                xa,
+                m*(xa-h)+k,
+                linestyle="--"
+            )
+
+            ax.plot(
+                xa,
+                -m*(xa-h)+k,
+                linestyle="--"
+            )
 
         else:
-            orientacion = "vertical"
 
-        datos = {
-            "h": h,
-            "k": k,
-            "a2": a2,
-            "b2": b2,
-            "orientacion": orientacion
-        }
+            y = np.linspace(
+                k-20,
+                k+20,
+                4000
+            )
 
-        return graficar_conica(tipo, datos)
+            parte = ((y-k)**2)/a2 - 1
 
-    # =================================================
-    # PARABOLA
-    # =================================================
+            x1 = []
+            x2 = []
+
+            for valor in parte:
+
+                if valor >= 0:
+
+                    xx = np.sqrt(valor*b2)
+
+                    x1.append(h+xx)
+                    x2.append(h-xx)
+
+                else:
+
+                    x1.append(np.nan)
+                    x2.append(np.nan)
+
+            ax.plot(x1, y)
+            ax.plot(x2, y)
+
+        ax.set_aspect("equal")
+
+    # =========================================
+    # PARÁBOLA
+    # =========================================
 
     elif tipo == "parábola":
 
-        # PARABOLA HORIZONTAL
-
         if A == 0:
 
-            if B == 0:
-                return None
+            k = -D/(2*B)
 
-            k = -D / (2 * B)
+            p = -C/(4*B)
 
-            h = 0
+            t = np.linspace(-20,20,1000)
 
-            p = -C / (4 * B)
+            x = (t**2)/(4*p)
+            y = t + k
 
-            datos = {
-                "h": h,
-                "k": k,
-                "p": p,
-                "orientacion": "horizontal"
-            }
+            ax.plot(x,y)
 
-        # PARABOLA VERTICAL
+            foco = (p,k)
+
+            ax.plot(
+                foco[0],
+                foco[1],
+                marker="x"
+            )
+
+            ax.annotate(
+                "Foco",
+                foco
+            )
+
+            ax.axvline(
+                -p,
+                linestyle="--"
+            )
 
         else:
 
-            h = -C / (2 * A)
+            h = -C/(2*A)
 
-            k = 0
+            p = -D/(4*A)
 
-            p = -D / (4 * A)
+            t = np.linspace(-20,20,1000)
 
-            datos = {
-                "h": h,
-                "k": k,
-                "p": p,
-                "orientacion": "vertical"
-            }
+            x = t + h
+            y = (t**2)/(4*p)
 
-        return graficar_conica(tipo, datos)
+            ax.plot(x,y)
 
-    return None
+            foco = (h,p)
+
+            ax.plot(
+                foco[0],
+                foco[1],
+                marker="x"
+            )
+
+            ax.annotate(
+                "Foco",
+                foco
+            )
+
+            ax.axhline(
+                -p,
+                linestyle="--"
+            )
+
+    ax.set_xlim(-20,20)
+    ax.set_ylim(-20,20)
+
+    return fig
