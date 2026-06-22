@@ -3,7 +3,10 @@ from tkinter import ttk
 from tkinter import messagebox
 from funciones import limite_izquierda
 from funciones import limite_derecha
-
+from funciones import existe_limite
+from funciones import valor_funcion_en_punto
+from funciones import es_continua
+from funciones import justificar
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
@@ -936,9 +939,14 @@ def generar():
         f"{datos_funcion['regla']}\n"
     )
 
-    analizar_limites(d)
-    izquierda = limite_izquierda(datos_funcion)
-    derecha = limite_derecha(datos_funcion)
+    resultado_limites = analizar_limites(d)
+
+    izquierda = resultado_limites["izquierda"]
+    derecha = resultado_limites["derecha"]
+
+    valor_funcion = resultado_limites["valor_funcion"]
+    existe = resultado_limites["existe_limite"]
+    continua = resultado_limites["continua"]
 
     resultado_texto.insert(
         tk.END,
