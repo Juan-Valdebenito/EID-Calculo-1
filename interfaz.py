@@ -696,6 +696,13 @@ def iniciar_app():
             tabs_evaluacion.select(tab_rut)
             return
 
+        if not valido:
+            estado_rut.config(text="RUT invalido")
+            estado_conica.config(text="Esperando RUT valido")
+            estado_limite.config(text="Esperando RUT valido")
+            tabs_evaluacion.select(tab_rut)
+            return
+
         d, dv = obtener_digitos(rut_ingresado)
         if d is None:
             estado_rut.config(text="Formato invalido")
@@ -706,7 +713,7 @@ def iniciar_app():
 
         v = calcular_v(dv)
         A, B, C, D, E, procedimiento_conica = construir_ecuacion_detallado(d, v)
-        tipo = clasificar_conica(A, B)
+        tipo = clasificar_conica(A, B, C, D, E)
         tipo_grafica = tipo.lower()
 
         escribir(texto_conicas, construir_reporte_conicas(A, B, C, D, E, procedimiento_conica, tipo))

@@ -96,7 +96,34 @@ def construir_ecuacion_detallado(d, v):
 # CLASIFICACIÓN
 # =====================================================
 
-def clasificar_conica(A, B):
+def es_conica_degenerada(A, B, C=0, D=0, E=None):
+
+    if A == 0 and B == 0:
+        return True
+
+    if A == 0 and B != 0 and C == 0:
+        return True
+
+    if B == 0 and A != 0 and D == 0:
+        return True
+
+    if E is not None and A != 0 and B != 0:
+        constante = (
+            -E
+            + (C ** 2) / (4 * A)
+            + (D ** 2) / (4 * B)
+        )
+
+        if constante == 0:
+            return True
+
+    return False
+
+
+def clasificar_conica(A, B, C=0, D=0, E=None):
+
+    if es_conica_degenerada(A, B, C, D, E):
+        return "Degenerada"
 
     if A == B and A != 0:
         return "Circunferencia"
@@ -160,7 +187,19 @@ def obtener_forma_canonica(A, B, C, D, E):
     pasos.append("====================================")
     pasos.append("")
 
-    tipo = clasificar_conica(A, B)
+    tipo = clasificar_conica(A, B, C, D, E)
+
+    if tipo == "Degenerada":
+
+        pasos.append(
+            "Caso degenerado: los coeficientes no permiten formar una conica regular."
+        )
+
+        pasos.append(
+            "Se omite la forma canonica porque produciria divisiones por cero."
+        )
+
+        return "\n".join(pasos)
 
     # CIRCUNFERENCIA Y ELIPSE
 
@@ -272,7 +311,7 @@ def generar_resumen_conica(d, v):
 
     A, B, C, D, E, procedimiento = construir_ecuacion_detallado(d, v)
 
-    tipo = clasificar_conica(A, B)
+    tipo = clasificar_conica(A, B, C, D, E)
 
     ecuacion = obtener_ecuacion_general(
         A,

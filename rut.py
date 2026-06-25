@@ -108,6 +108,11 @@ def obtener_digitos(rut):
 
     rut = limpiar_rut(rut)
 
+    valido, _ = validar_rut_detallado(rut)
+
+    if not valido:
+        return None, None
+
     partes = rut.split("-")
 
     if len(partes) != 2:

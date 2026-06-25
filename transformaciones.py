@@ -114,6 +114,30 @@ def forma_canonica(A, B, C, D, E):
     texto.append("====================================")
     texto.append("")
 
+    if (
+        (A == 0 and B == 0)
+        or (A == 0 and B != 0 and C == 0)
+        or (B == 0 and A != 0 and D == 0)
+        or (
+            A != 0
+            and B != 0
+            and (
+                -E
+                + (C ** 2) / (4 * A)
+                + (D ** 2) / (4 * B)
+            ) == 0
+        )
+    ):
+        texto.append("Caso degenerado")
+        texto.append("")
+        texto.append(
+            "No se puede obtener una forma canonica regular sin dividir por cero."
+        )
+        texto.append(
+            "Los coeficientes no definen una circunferencia, elipse, hiperbola o parabola valida."
+        )
+        return "\n".join(texto)
+
     # =====================================
     # CIRCUNFERENCIA / ELIPSE
     # =====================================

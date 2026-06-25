@@ -14,6 +14,19 @@ def valor_absoluto(x):
     return x
 
 
+def mostrar_caso_degenerado(ax):
+
+    ax.text(
+        0.5,
+        0.5,
+        "Caso degenerado\nNo hay conica regular para graficar",
+        transform=ax.transAxes,
+        ha="center",
+        va="center",
+        fontsize=12,
+    )
+
+
 # =====================================================
 # GRAFICAR DESDE ECUACIÓN
 # =====================================================
@@ -28,6 +41,12 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
     ax.grid(True)
 
     ax.set_title(f"{tipo.capitalize()}")
+
+    if tipo == "degenerada":
+        mostrar_caso_degenerado(ax)
+        ax.set_xlim(-20,20)
+        ax.set_ylim(-20,20)
+        return fig
 
     # =========================================
     # CIRCUNFERENCIA
@@ -154,6 +173,12 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
         a = np.sqrt(a2)
         b = np.sqrt(b2)
 
+        if a == 0 or b == 0:
+            mostrar_caso_degenerado(ax)
+            ax.set_xlim(-20,20)
+            ax.set_ylim(-20,20)
+            return fig
+
         ax.plot(
             h,
             k,
@@ -253,9 +278,21 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
 
         if A == 0:
 
+            if B == 0 or C == 0:
+                mostrar_caso_degenerado(ax)
+                ax.set_xlim(-20,20)
+                ax.set_ylim(-20,20)
+                return fig
+
             k = -D/(2*B)
 
             p = -C/(4*B)
+
+            if p == 0:
+                mostrar_caso_degenerado(ax)
+                ax.set_xlim(-20,20)
+                ax.set_ylim(-20,20)
+                return fig
 
             t = np.linspace(-20,20,1000)
 
@@ -284,9 +321,21 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
 
         else:
 
+            if A == 0 or D == 0:
+                mostrar_caso_degenerado(ax)
+                ax.set_xlim(-20,20)
+                ax.set_ylim(-20,20)
+                return fig
+
             h = -C/(2*A)
 
             p = -D/(4*A)
+
+            if p == 0:
+                mostrar_caso_degenerado(ax)
+                ax.set_xlim(-20,20)
+                ax.set_ylim(-20,20)
+                return fig
 
             t = np.linspace(-20,20,1000)
 
