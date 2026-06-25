@@ -1,145 +1,277 @@
 import tkinter as tk
 from tkinter import ttk
-from tkinter import messagebox
-from funciones import limite_izquierda
-from funciones import limite_derecha
-from funciones import existe_limite
-from funciones import valor_funcion_en_punto
-from funciones import es_continua
-from funciones import justificar
 
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from rut import validar_rut_detallado
-from rut import obtener_digitos
-from rut import calcular_v
-
-from conica import construir_ecuacion_detallado
-from conica import clasificar_conica
-
-import rut
-from transformaciones import ecuacion_general
-from transformaciones import forma_canonica
-
-from funciones import analizar_limites
-from funciones import construir_funcion
-
+from conica import clasificar_conica, construir_ecuacion_detallado
 from evidencia import obtener_tabla
-
-from graficas import graficar_desde_ecuacion
+from funciones import analizar_limites, construir_funcion
 from grafica_limites import graficar_funcion
+from graficas import graficar_desde_ecuacion
+from rut import calcular_v, obtener_digitos, validar_rut_detallado
+from transformaciones import ecuacion_general, forma_canonica
+
 
 # =====================================================
-# LÓGICA DE EVALUACIÓN INTERACTIVA CON BOTÓN INDIVIDUAL
+# COLORES Y ESTILO
 # =====================================================
 
-def verificar_campo_especifico(elemento):
-    """Valida un único campo Entry específico y cambia su estado estéticamente"""
-    entry = sesion_evaluacion["widgets_entry"][elemento]
-    valor_usuario = entry.get().strip()
-    valor_correcto = sesion_evaluacion["valores_reales"].get(elemento, "")
-    
-    es_correcto = False
-    try:
-        # Comparación numérica aproximada a 2 decimales
-        if round(float(valor_usuario), 2) == round(float(valor_correcto), 2):
-            es_correcto = True
-    except ValueError:
-        # Comparación de texto si es la orientación (ej: horizontal)
-        if valor_usuario.lower() == str(valor_correcto).lower():
-            es_correcto = True
-            
-    # Cambiamos el contenido del input dinámicamente según tu idea, Gustavo
-    if es_correcto:
-        entry.config(fg="#00ff66", font=("Arial", 10, "bold")) # Letras verdes
-        entry.delete(0, tk.END)
-        entry.insert(0, "¡Correcto!")
-    else:
-        entry.config(fg="#ff3333", font=("Arial", 10, "bold")) # Letras rojas
-        entry.delete(0, tk.END)
-        entry.insert(0, f"Error. Era: {valor_correcto}")
+COLOR_FONDO = "#eef8f6"
+COLOR_PANEL = "#063b3f"
+COLOR_PANEL_2 = "#0b5559"
+COLOR_TEXTO = "#f3fffb"
+COLOR_MUTED = "#a9d9d1"
+COLOR_BOTON = "#0f9f8f"
+COLOR_BOTON_HOVER = "#0a7f75"
+COLOR_CORRECTO = "#087f5b"
+COLOR_ERROR = "#b42318"
+COLOR_SUPERFICIE = "#fbfffd"
+COLOR_SUPERFICIE_2 = "#e0f2ef"
+COLOR_LINEA = "#b9ddd8"
+FUENTE = ("Arial", 10)
+FUENTE_TITULO = ("Arial", 18, "bold")
+FUENTE_SECCION = ("Arial", 11, "bold")
+FUENTE_MONO = ("Consolas", 10)
+
+
+sesion_evaluacion = {"valores_reales": {}, "widgets_entry": {}}
+
+
+# =====================================================
+# HELPERS DE INTERFAZ
+# =====================================================
+
+def aplicar_estilos():
+    style = ttk.Style()
+    style.theme_use("clam")
+
+    style.configure(
+        "TNotebook",
+        background=COLOR_FONDO,
+        borderwidth=0,
+    )
+    style.configure(
+        "TNotebook.Tab",
+        padding=(14, 8),
+        font=("Arial", 10, "bold"),
+        background=COLOR_SUPERFICIE_2,
+        foreground="#0f3f43",
+    )
+    style.map(
+        "TNotebook.Tab",
+        background=[("selected", COLOR_SUPERFICIE)],
+        foreground=[("selected", COLOR_BOTON)],
+    )
+    style.configure(
+        "Treeview",
+        rowheight=24,
+        font=FUENTE,
+        background=COLOR_SUPERFICIE,
+        fieldbackground=COLOR_SUPERFICIE,
+    )
+    style.configure(
+        "Treeview.Heading",
+        font=("Arial", 10, "bold"),
+        background=COLOR_SUPERFICIE_2,
+        foreground="#0f3f43",
+    )
+
+
+def crear_texto(parent, height=12):
+    texto = tk.Text(
+        parent,
+        height=height,
+        wrap="word",
+        bg=COLOR_SUPERFICIE,
+        fg="#0b2528",
+        insertbackground="#0b2528",
+        relief="solid",
+        bd=1,
+        font=FUENTE_MONO,
+        padx=10,
+        pady=10,
+    )
+    texto.pack(fill="both", expand=True, padx=10, pady=10)
+    texto.config(state="disabled")
+    return texto
+
+
+def escribir(texto_widget, contenido):
+    texto_widget.config(state="normal")
+    texto_widget.delete("1.0", tk.END)
+    texto_widget.insert("1.0", contenido)
+    texto_widget.config(state="disabled")
+
+
+def limpiar_frame(frame):
+    for widget in frame.winfo_children():
+        widget.destroy()
+
+
+def mostrar_figura(frame, fig):
+    limpiar_frame(frame)
+    canvas = FigureCanvasTkAgg(fig, master=frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill="both", expand=True)
+    return canvas
+
+
+def crear_estado(parent, titulo, valor="-"):
+    contenedor = tk.Frame(parent, bg=COLOR_PANEL_2)
+    contenedor.pack(fill="x", padx=16, pady=5)
+
+    tk.Label(
+        contenedor,
+        text=titulo,
+        bg=COLOR_PANEL_2,
+        fg=COLOR_MUTED,
+        font=("Arial", 9, "bold"),
+        anchor="w",
+    ).pack(fill="x")
+
+    label = tk.Label(
+        contenedor,
+        text=valor,
+        bg=COLOR_PANEL_2,
+        fg=COLOR_TEXTO,
+        font=FUENTE,
+        anchor="w",
+        justify="left",
+        wraplength=250,
+    )
+    label.pack(fill="x", pady=(2, 0))
+    return label
+
+
+def boton_menu(parent, texto, comando):
+    boton = tk.Button(
+        parent,
+        text=texto,
+        command=comando,
+        bg=COLOR_PANEL_2,
+        activebackground=COLOR_PANEL_2,
+        fg=COLOR_TEXTO,
+        activeforeground=COLOR_TEXTO,
+        relief="flat",
+        font=("Arial", 10, "bold"),
+        anchor="w",
+        padx=18,
+        pady=10,
+        bd=0,
+        highlightthickness=1,
+        highlightbackground="#12746d",
+        highlightcolor="#33cabb",
+        cursor="hand2",
+    )
+    boton.pack(fill="x", padx=10, pady=2)
+    return boton
+
+
+def seccion(parent, texto):
+    tk.Label(
+        parent,
+        text=texto.upper(),
+        bg=COLOR_PANEL,
+        fg=COLOR_MUTED,
+        font=("Arial", 8, "bold"),
+        anchor="w",
+    ).pack(fill="x", padx=18, pady=(16, 4))
+
+
+def titulo_panel(parent, texto):
+    tk.Label(
+        parent,
+        text=texto,
+        bg=COLOR_SUPERFICIE,
+        fg="#0b2528",
+        font=FUENTE_SECCION,
+        anchor="w",
+    ).pack(fill="x", padx=10, pady=(10, 0))
+
+
+def figura_inicial(titulo):
+    fig, ax = plt.subplots(figsize=(7, 4.6))
+    ax.set_title(titulo)
+    ax.axhline(0, color="#0b2528", linewidth=0.7)
+    ax.axvline(0, color="#0b2528", linewidth=0.7)
+    ax.grid(True, color="#c7e5e0")
+    ax.set_aspect("equal")
+    ax.set_xlim(-10, 10)
+    ax.set_ylim(-10, 10)
+    return fig
+
+
+# =====================================================
+# EVALUACION INTERACTIVA DE CONICAS
+# =====================================================
 
 def verificar_fila_evaluacion(claves):
-    """Valida los campos Entry de una fila completa y cambia su estado con colores dinámicos"""
     valores_reales = sesion_evaluacion["valores_reales"]
     widgets_entry = sesion_evaluacion["widgets_entry"]
-    
+
     for clave in claves:
         if clave not in widgets_entry:
             continue
+
         entry = widgets_entry[clave]
         valor_usuario = entry.get().strip()
         valor_correcto = valores_reales.get(clave, 0)
-        
         es_correcto = False
-        try:
-            # Comparación numérica aproximada tolerando pequeñas variaciones decimales
-            if abs(float(valor_usuario) - float(valor_correcto)) < 0.05:
-                es_correcto = True
-        except ValueError:
-            # Comparación de texto estándar por si acaso
-            if valor_usuario.lower() == str(valor_correcto).lower():
-                es_correcto = True
-                
-        # Aplicamos el comportamiento estético solicitado por Gustavo
-        if es_correcto:
-            entry.config(fg="#00ff66", font=("Arial", 10, "bold")) # Verde para correcto
-            entry.delete(0, tk.END)
-            entry.insert(0, "¡Correcto!")
-        else:
-            entry.config(fg="#ff3333", font=("Arial", 9, "bold")) # Rojo para error
-            entry.delete(0, tk.END)
-            entry.insert(0, f"Error: {valor_correcto}")
 
-def mostrar_campos_evaluacion(tipo, A, B, C, D, E):
-    """Genera filas con elementos geométricos reales de Ariel y parejas horizontales de Gustavo"""
-    # Limpiamos el contenedor anterior por completo
-    for widget in frame_campos_dinamicos.winfo_children():
-        widget.destroy()
-        
+        try:
+            es_correcto = abs(float(valor_usuario) - float(valor_correcto)) < 0.05
+        except ValueError:
+            es_correcto = valor_usuario.lower() == str(valor_correcto).lower()
+
+        entry.config(
+            fg=COLOR_CORRECTO if es_correcto else COLOR_ERROR,
+            font=("Arial", 10, "bold"),
+        )
+        entry.delete(0, tk.END)
+        entry.insert(0, "Correcto" if es_correcto else f"Error: {valor_correcto}")
+
+
+def mostrar_campos_evaluacion(frame_campos_dinamicos, tipo, A, B, C, D, E):
+    limpiar_frame(frame_campos_dinamicos)
     sesion_evaluacion["valores_reales"] = {}
     sesion_evaluacion["widgets_entry"] = {}
-    
+
+    tipo_normalizado = tipo.lower()
     valores_reales = {}
-    estructura_filas = [] # Guardará cómo se agruparán los elementos visualmente
-    
-    # Helper seguro para calcular raíces sin importar restricciones de librerías
+    estructura_filas = []
+
     def sqrt_segura(val):
         return val ** 0.5 if val > 0 else 0
 
-    # =================================================
-    # CÁLCULOS ANALÍTICOS Y MATRICES DE LAYOUT
-    # =================================================
-    
-    if tipo in ["circunferencia", "elipse", "hipérbola"] and A != 0 and B != 0:
+    if tipo_normalizado.startswith(("circunferencia", "elipse", "hip")) and A != 0 and B != 0:
         h_val = -C / (2 * A)
         k_val = -D / (2 * B)
         constante = -E + (C ** 2) / (4 * A) + (D ** 2) / (4 * B)
-        
+
         valores_reales["Centro H"] = round(h_val, 2)
         valores_reales["Centro K"] = round(k_val, 2)
         estructura_filas.append({"tipo": "pair", "lbl1": "Centro H", "lbl2": "Centro K", "keys": ["Centro H", "Centro K"]})
-        
-        if tipo == "circunferencia":
+
+        if tipo_normalizado.startswith("circunferencia"):
             valores_reales["Radio"] = round(sqrt_segura(constante / A), 2)
             estructura_filas.append({"tipo": "single", "lbl": "Radio", "key": "Radio"})
-            
-        elif tipo == "elipse":
+
+        elif tipo_normalizado.startswith("elipse"):
             a2, b2 = constante / A, constante / B
-            if abs(a2) >= abs(b2): # Elipse Horizontal
+            if abs(a2) >= abs(b2):
                 a_param = sqrt_segura(abs(a2))
                 b_param = sqrt_segura(abs(b2))
                 c_param = sqrt_segura(abs(a2) - abs(b2))
                 f1_x, f1_y = h_val - c_param, k_val
                 f2_x, f2_y = h_val + c_param, k_val
-            else: # Elipse Vertical
+            else:
                 a_param = sqrt_segura(abs(b2))
                 b_param = sqrt_segura(abs(a2))
                 c_param = sqrt_segura(abs(b2) - abs(a2))
                 f1_x, f1_y = h_val, k_val - c_param
                 f2_x, f2_y = h_val, k_val + c_param
-                
+
             valores_reales["Foco 1 X"] = round(f1_x, 2)
             valores_reales["Foco 1 Y"] = round(f1_y, 2)
             valores_reales["Foco 2 X"] = round(f2_x, 2)
@@ -147,1009 +279,511 @@ def mostrar_campos_evaluacion(tipo, A, B, C, D, E):
             valores_reales["Eje Mayor"] = round(2 * a_param, 2)
             valores_reales["Eje Menor"] = round(2 * b_param, 2)
             valores_reales["Excentricidad"] = round(c_param / a_param, 2) if a_param > 0 else 0
-            
-            estructura_filas.append({"tipo": "pair", "lbl1": "Foco 1 X", "lbl2": "Foco 1 Y", "keys": ["Foco 1 X", "Foco 1 Y"]})
-            estructura_filas.append({"tipo": "pair", "lbl1": "Foco 2 X", "lbl2": "Foco 2 Y", "keys": ["Foco 2 X", "Foco 2 Y"]})
-            estructura_filas.append({"tipo": "single", "lbl": "Eje Mayor", "key": "Eje Mayor"})
-            estructura_filas.append({"tipo": "single", "lbl": "Eje Menor", "key": "Eje Menor"})
-            estructura_filas.append({"tipo": "single", "lbl": "Excentricidad", "key": "Excentricidad"})
-            
-        elif tipo == "hipérbola":
+
+            estructura_filas.extend([
+                {"tipo": "pair", "lbl1": "Foco 1 X", "lbl2": "Foco 1 Y", "keys": ["Foco 1 X", "Foco 1 Y"]},
+                {"tipo": "pair", "lbl1": "Foco 2 X", "lbl2": "Foco 2 Y", "keys": ["Foco 2 X", "Foco 2 Y"]},
+                {"tipo": "single", "lbl": "Eje Mayor", "key": "Eje Mayor"},
+                {"tipo": "single", "lbl": "Eje Menor", "key": "Eje Menor"},
+                {"tipo": "single", "lbl": "Excentricidad", "key": "Excentricidad"},
+            ])
+
+        elif tipo_normalizado.startswith("hip"):
             a_param = sqrt_segura(abs(constante / A))
             b_param = sqrt_segura(abs(constante / B))
-            
-            # Determinamos las pendientes exactas de las asíntotas calculadas en tu graficas.py
             m_val = (b_param / a_param) if A > 0 else (a_param / b_param)
-            
+
             valores_reales["Eje Transverso"] = round(2 * a_param, 2)
             valores_reales["Eje Conjugado"] = round(2 * b_param, 2)
             valores_reales["Asíntota 1 (m)"] = round(m_val, 2)
             valores_reales["Asíntota 2 (m)"] = round(-m_val, 2)
-            
-            estructura_filas.append({"tipo": "single", "lbl": "Eje Transverso", "key": "Eje Transverso"})
-            estructura_filas.append({"tipo": "single", "lbl": "Eje Conjugado", "key": "Eje Conjugado"})
-            estructura_filas.append({"tipo": "pair", "lbl1": "Asíntota 1 (m)", "lbl2": "Asíntota 2 (m)", "keys": ["Asíntota 1 (m)", "Asíntota 2 (m)"]})
-            
-    elif tipo == "parábola":
-        if A == 0 and B != 0: # Horizontal
+
+            estructura_filas.extend([
+                {"tipo": "single", "lbl": "Eje Transverso", "key": "Eje Transverso"},
+                {"tipo": "single", "lbl": "Eje Conjugado", "key": "Eje Conjugado"},
+                {"tipo": "pair", "lbl1": "Asíntota 1 (m)", "lbl2": "Asíntota 2 (m)", "keys": ["Asíntota 1 (m)", "Asíntota 2 (m)"]},
+            ])
+
+    elif tipo_normalizado.startswith("par"):
+        if A == 0 and B != 0:
             k_val = -D / (2 * B)
-            h_val = (-E + (D**2)/(4*B)) / C if C != 0 else 0
+            h_val = (-E + (D ** 2) / (4 * B)) / C if C != 0 else 0
             p_val = -C / (4 * B)
             f_x, f_y = h_val + p_val, k_val
             dir_val = h_val - p_val
-        else: # Vertical
+        else:
             h_val = -C / (2 * A)
-            k_val = (-E + (C**2)/(4*A)) / D if D != 0 else 0
+            k_val = (-E + (C ** 2) / (4 * A)) / D if D != 0 else 0
             p_val = -D / (4 * A)
             f_x, f_y = h_val, k_val + p_val
             dir_val = k_val - p_val
-            
+
         valores_reales["Vértice H"] = round(h_val, 2)
         valores_reales["Vértice K"] = round(k_val, 2)
         valores_reales["Foco X"] = round(f_x, 2)
         valores_reales["Foco Y"] = round(f_y, 2)
         valores_reales["Directriz"] = round(dir_val, 2)
-        
-        estructura_filas.append({"tipo": "pair", "lbl1": "Vértice H", "lbl2": "Vértice K", "keys": ["Vértice H", "Vértice K"]})
-        estructura_filas.append({"tipo": "pair", "lbl1": "Foco X", "lbl2": "Foco Y", "keys": ["Foco X", "Foco Y"]})
-        estructura_filas.append({"tipo": "single", "lbl": "Directriz (Valor)", "key": "Directriz"})
+
+        estructura_filas.extend([
+            {"tipo": "pair", "lbl1": "Vértice H", "lbl2": "Vértice K", "keys": ["Vértice H", "Vértice K"]},
+            {"tipo": "pair", "lbl1": "Foco X", "lbl2": "Foco Y", "keys": ["Foco X", "Foco Y"]},
+            {"tipo": "single", "lbl": "Directriz", "key": "Directriz"},
+        ])
 
     sesion_evaluacion["valores_reales"] = valores_reales
 
-    # =================================================
-    # CONSTRUCCIÓN DINÁMICA DEL INTERFAZ GRÁFICA
-    # =================================================
-    
-    for fila in estructura_filas:
-        row_frame = tk.Frame(frame_campos_dinamicos, bg=COLOR_PANEL)
-        row_frame.pack(fill="x", pady=4, padx=(40, 40)) # Centrado y compacto horizontalmente
-        
-        if fila["tipo"] == "single":
-            lbl = tk.Label(row_frame, text=f"{fila['lbl']}:", font=("Arial", 10), bg=COLOR_PANEL, fg="white", width=14, anchor="e")
-            lbl.pack(side="left", padx=5)
-            
-            entry = tk.Entry(row_frame, font=("Arial", 10), bg="#151521", fg="white", insertbackground="white", width=15)
-            entry.pack(side="left", padx=5)
-            entry.bind("<Button-1>", lambda e, ent=entry: [ent.config(fg="white", font=("Arial", 10)), ent.delete(0, tk.END)])
-            
-            sesion_evaluacion["widgets_entry"][fila["key"]] = entry
-            
-        elif fila["tipo"] == "pair":
-            # Primer elemento de la pareja
-            lbl1 = tk.Label(row_frame, text=f"{fila['lbl1']}:", font=("Arial", 10), bg=COLOR_PANEL, fg="white", width=14, anchor="e")
-            lbl1.pack(side="left", padx=2)
-            
-            entry1 = tk.Entry(row_frame, font=("Arial", 10), bg="#151521", fg="white", insertbackground="white", width=10)
-            entry1.pack(side="left", padx=2)
-            entry1.bind("<Button-1>", lambda e, ent=entry1: [ent.config(fg="white", font=("Arial", 10)), ent.delete(0, tk.END)])
-            
-            sesion_evaluacion["widgets_entry"][fila["keys"][0]] = entry1
-            
-            # Segundo elemento de la pareja pegado horizontalmente
-            lbl2 = tk.Label(row_frame, text=f"{fila['lbl2']}:", font=("Arial", 10), bg=COLOR_PANEL, fg="white", width=14, anchor="e")
-            lbl2.pack(side="left", padx=2)
-            
-            entry2 = tk.Entry(row_frame, font=("Arial", 10), bg="#151521", fg="white", insertbackground="white", width=10)
-            entry2.pack(side="left", padx=2)
-            entry2.bind("<Button-1>", lambda e, ent=entry2: [ent.config(fg="white", font=("Arial", 10)), ent.delete(0, tk.END)])
-            
-            sesion_evaluacion["widgets_entry"][fila["keys"][1]] = entry2
+    if not estructura_filas:
+        tk.Label(
+            frame_campos_dinamicos,
+            text="No hay elementos geometricos evaluables para este caso.",
+            bg=COLOR_SUPERFICIE,
+            fg="#47615e",
+            font=FUENTE,
+        ).pack(anchor="w", padx=10, pady=10)
+        return
 
-        # Botón único al final de la fila encargado de verificar el contenido de esa línea
-        btn_verificar = tk.Button(
+    for fila in estructura_filas:
+        row_frame = tk.Frame(frame_campos_dinamicos, bg=COLOR_SUPERFICIE)
+        row_frame.pack(fill="x", pady=4, padx=10)
+
+        claves = fila.get("keys", [fila.get("key")])
+        items = (
+            [(fila["lbl1"], claves[0]), (fila["lbl2"], claves[1])]
+            if fila["tipo"] == "pair"
+            else [(fila["lbl"], fila["key"])]
+        )
+
+        for label_text, key in items:
+            tk.Label(
+                row_frame,
+                text=f"{label_text}:",
+                font=FUENTE,
+                bg=COLOR_SUPERFICIE,
+                fg="#0b2528",
+                width=15,
+                anchor="e",
+            ).pack(side="left", padx=(0, 5))
+
+            entry = tk.Entry(
+                row_frame,
+                font=FUENTE,
+                width=12,
+                relief="solid",
+                bd=1,
+                bg="#f7fffc",
+                fg="#0b2528",
+                insertbackground="#0b2528",
+                highlightthickness=1,
+                highlightbackground=COLOR_LINEA,
+                highlightcolor=COLOR_BOTON,
+            )
+            entry.pack(side="left", padx=(0, 10))
+            entry.bind("<Button-1>", lambda _e, ent=entry: (ent.config(fg="#0b2528", font=FUENTE), ent.delete(0, tk.END)))
+            sesion_evaluacion["widgets_entry"][key] = entry
+
+        tk.Button(
             row_frame,
             text="Verificar",
-            command=lambda k=fila.get("keys", [fila.get("key")]): verificar_fila_evaluacion(k),
+            command=lambda k=claves: verificar_fila_evaluacion(k),
             bg=COLOR_BOTON,
-            fg="white",
+            activebackground=COLOR_BOTON_HOVER,
+            fg="#ffffff",
+            activeforeground="#ffffff",
             font=("Arial", 9, "bold"),
-            padx=10,
-            pady=1
+            relief="flat",
+            padx=12,
+            pady=5,
+            bd=0,
+            highlightthickness=1,
+            highlightbackground="#7fd2c8",
+            cursor="hand2",
+        ).pack(side="left", padx=4)
+
+
+# =====================================================
+# TEXTOS DE REPORTE
+# =====================================================
+
+def construir_reporte_rut(rut_ingresado, valido, detalle):
+    estado = "Valido" if valido else "Invalido"
+    return (
+        "RUT\n"
+        "====================================\n"
+        "Ingreso\n"
+        f"{rut_ingresado}\n\n"
+        "Validacion\n"
+        f"Estado: {estado}\n\n"
+        "Procedimiento modulo 11\n"
+        f"{detalle.strip()}\n"
+    )
+
+
+def construir_reporte_conicas(A, B, C, D, E, procedimiento_conica, tipo):
+    return (
+        "CONICAS\n"
+        "====================================\n"
+        "Ecuacion general\n"
+        f"{ecuacion_general(A, B, C, D, E)}\n\n"
+        "Procedimiento\n"
+        f"{procedimiento_conica}\n\n"
+        "Forma canonica\n"
+        f"{forma_canonica(A, B, C, D, E)}\n\n"
+        "Clasificacion\n"
+        f"{tipo}\n\n"
+        "Grafica\n"
+        "Disponible en la pestaña Grafica > Conica.\n"
+    )
+
+
+def construir_reporte_transformaciones(A, B, C, D, E):
+    return (
+        "TRANSFORMACIONES\n"
+        "====================================\n"
+        "Procedimiento\n"
+        "Se transforma desde la ecuacion general completando cuadrados hasta llegar a la forma canonica.\n\n"
+        f"{forma_canonica(A, B, C, D, E)}\n\n"
+        "Grafica original\n"
+        "Disponible en la pestaña Grafica > Original.\n\n"
+        "Grafica transformada\n"
+        "Disponible en la pestaña Grafica > Transformada.\n"
+    )
+
+
+def construir_reporte_limites(datos_funcion, resultado_limites, tabla_datos):
+    punto_a = datos_funcion["a"]
+    tipo_discontinuidad = datos_funcion["tipo"]
+    izq_val = resultado_limites["izquierda"]
+    der_val = resultado_limites["derecha"]
+
+    evidencia = ["x".ljust(14) + "f(x)"]
+    evidencia.append("-" * 30)
+    for fila in tabla_datos:
+        evidencia.append(str(fila["x"]).ljust(14) + str(fila["y"]))
+
+    if tipo_discontinuidad == "removible":
+        conclusion = (
+            f"Los limites laterales coinciden ({izq_val} = {der_val}), "
+            "pero la funcion no esta definida en el punto. Hay discontinuidad removible."
         )
-        btn_verificar.pack(side="left", padx=10)
-
-
-# =====================================================
-# COLORES
-# =====================================================
-
-COLOR_FONDO = "#1e1e2f"
-COLOR_PANEL = "#2b2b40"
-COLOR_BOTON = "#4a90e2"
-COLOR_TEXTO = "white"
-
-FUENTE = ("Arial", 11)
-FUENTE_TITULO = ("Arial", 18, "bold")
-
-
-# =====================================================
-# VENTANA PRINCIPAL
-# =====================================================
-
-ventana = tk.Tk()
-
-ventana.title("Proyecto EID - Secciones Cónicas")
-ventana.geometry("1150x830")
-ventana.configure(bg=COLOR_FONDO)
-
-
-# =====================================================
-# PANEL IZQUIERDO
-# =====================================================
-
-panel_izq = tk.Frame(
-    ventana,
-    bg=COLOR_PANEL,
-    width=500
-)
-
-panel_izq.pack(
-    side="left",
-    fill="y"
-)
-
-panel_izq.pack_propagate(False)
-
-
-# =====================================================
-# PANEL DERECHO
-# =====================================================
-
-panel_der = tk.Frame(
-    ventana,
-    bg="white"
-)
-
-panel_der.pack(
-    side="right",
-    fill="both",
-    expand=True
-)
-
-
-# =====================================================
-# TITULO
-# =====================================================
-
-titulo = tk.Label(
-    panel_izq,
-    text="Generador de\nSecciones Cónicas",
-    bg=COLOR_PANEL,
-    fg="white",
-    font=FUENTE_TITULO
-)
-
-titulo.pack(pady=20)
-
-
-# =====================================================
-# INGRESO RUT
-# =====================================================
-
-label_rut = tk.Label(
-    panel_izq,
-    text="Ingrese RUT:",
-    bg=COLOR_PANEL,
-    fg="white",
-    font=FUENTE
-)
-
-label_rut.pack()
-
-entrada_rut = tk.Entry(
-    panel_izq,
-    width=30,
-    font=("Arial", 12)
-)
-
-entrada_rut.pack(pady=10)
-
-
-# =====================================================
-
-# RESULTADOS
-
-# =====================================================
-
-frame_resultados = tk.Frame(
-    panel_izq,
-    bg=COLOR_PANEL
-)
-
-
-frame_resultados.pack(pady=10, fill="both", expand=True, padx=20)
-resultado_texto = tk.Text(
-    frame_resultados,
-    width=55,
-    height=30,  
-    bg="#151521",
-    fg="white",
-    font=("Consolas", 10)
-)
-
-resultado_texto.pack(
-    side="left",
-    fill="both",
-    expand=True
-)
-
-
-# =====================================================
-# NOTEBOOK
-# =====================================================
-
-tabs = ttk.Notebook(panel_der)
-
-tabs.pack(side="left", fill="both", expand=True)
-
-tab_grafica = tk.Frame(tabs)
-
-canvas_conica = tk.Canvas(tab_grafica)
-scroll_conica = tk.Scrollbar(
-    tab_grafica,
-    orient="vertical",
-    command=canvas_conica.yview
-)
-
-frame_conica = tk.Frame(canvas_conica)
-
-frame_conica.bind(
-    "<Configure>",
-    lambda e: canvas_conica.configure(
-        scrollregion=canvas_conica.bbox("all")
-    )
-)
-
-canvas_conica.create_window(
-    (0, 0),
-    window=frame_conica,
-    anchor="nw"
-)
-
-canvas_conica.configure(
-    yscrollcommand=scroll_conica.set
-)
-
-
-canvas_conica.pack(
-    side="left",
-    fill="both",
-    expand=True
-)
-
-scroll_conica.pack(
-    side="right",
-    fill="y"
-)
-
-tab_limites = tk.Frame(tabs)
-
-canvas_limites = tk.Canvas(tab_limites)
-
-scroll_limites = tk.Scrollbar(
-    tab_limites,
-    orient="vertical",
-    command=canvas_limites.yview
-)
-
-frame_limites = tk.Frame(canvas_limites)
-
-frame_limites.bind(
-    "<Configure>",
-    lambda e: canvas_limites.configure(
-        scrollregion=canvas_limites.bbox("all")
-    )
-)
-
-canvas_limites.create_window(
-    (0, 0),
-    window=frame_limites,
-    anchor="nw"
-)
-
-canvas_limites.configure(
-    yscrollcommand=scroll_limites.set
-)
-
-
-canvas_limites.pack(
-    side="left",
-    fill="both",
-    expand=True
-)
-
-scroll_limites.pack(
-    side="right",
-    fill="y"
-)
-
-
-
-tabs.add(tab_grafica, text="Cónica")
-tabs.add(tab_limites, text="Límites")
-
-def scroll_mouse(event):
-
-    pestaña = tabs.index(tabs.select())
-
-    if pestaña == 0:
-        canvas_conica.yview_scroll(
-            int(-1 * (event.delta / 120)),
-            "units"
-        )
-
-    elif pestaña == 1:
-        canvas_limites.yview_scroll(
-            int(-1 * (event.delta / 120)),
-            "units"
-        )
-
-ventana.bind_all(
-    "<MouseWheel>",
-    scroll_mouse
-)
-
-# =====================================================
-# FRAME GRAFICA
-# =====================================================
-
-frame_contenido_conica = tk.Frame(tab_grafica, bg=COLOR_FONDO)
-frame_contenido_conica.pack(side="left", fill="both", expand=True, padx=10, pady=5)
-# 1. Tu gráfica posicionada ARRIBA del bloque unificado
-frame_grafica = tk.Frame(frame_contenido_conica, bg="white")
-frame_grafica.pack(side="top", fill="both", expand=True, padx=5, pady=5)
-# 2. Tu panel de Evaluación Interactiva posicionado ABAJO del bloque unificado
-frame_evaluacion_conica = tk.Frame(frame_contenido_conica, bg=COLOR_PANEL)
-frame_evaluacion_conica.pack(side="bottom", fill="x", padx=5, pady=5)
-lbl_eval_titulo = tk.Label(
-    frame_evaluacion_conica,
-    text="─── Evaluación Interactiva de Elementos Geométricos ───",
-    font=("Arial", 10, "bold"),
-    bg=COLOR_PANEL,
-    fg="#4a90e2"
-)
-lbl_eval_titulo.pack(pady=5, anchor="w", padx=20)
-# Contenedor para las preguntas dinámicas
-frame_campos_dinamicos = tk.Frame(frame_evaluacion_conica, bg=COLOR_PANEL)
-frame_campos_dinamicos.pack(fill="x", pady=5)
-# Diccionario global de persistencia
-sesion_evaluacion = {"valores_reales": {}, "widgets_entry": {}}
-
-# frame_elementos = tk.LabelFrame(
-#     frame_conica,
-#     text="Elementos Geométricos",
-#     padx=10,
-#     pady=10
-# )
-
-# frame_elementos.pack(
-#     fill="x",
-#     padx=10,
-#     pady=10
-# )
-
-# ==========================================
-# CAMPOS GEOMÉTRICOS
-# ==========================================
-
-elementos = {}
-
-# def actualizar_campos_conica(tipo):
-
-#     for widget in frame_elementos.winfo_children():
-#         widget.destroy()
-
-#     elementos.clear()
-
-#     if tipo.lower() == "circunferencia":
-
-#         campos = [
-#             "Centro",
-#             "Radio"
-#         ]
-
-#     elif tipo.lower() == "elipse":
-
-#         campos = [
-#             "Centro",
-#             "Vértices",
-#             "Focos",
-#             "Eje mayor",
-#             "Eje menor",
-#             "Excentricidad"
-#         ]
-
-#     elif tipo.lower() in ["hipérbola", "hiperbola"]:
-
-#         campos = [
-#             "Centro",
-#             "Vértices",
-#             "Focos",
-#             "Eje transverso",
-#             "Eje conjugado",
-#             "Asíntotas"
-#         ]
-
-#     elif tipo.lower() in ["parábola", "parabola"]:
-
-#         campos = [
-#             "Vértice",
-#             "Foco",
-#             "Directriz"
-#         ]
-
-#     else:
-
-#         campos = []
-
-#     for i, campo in enumerate(campos):
-
-#         tk.Label(
-#             frame_elementos,
-#             text=campo + ":"
-#         ).grid(
-#             row=i,
-#             column=0,
-#             sticky="w",
-#             padx=5,
-#             pady=3
-#         )
-
-#         entrada = tk.Entry(
-#             frame_elementos,
-#             width=50
-#         )
-
-#         entrada.grid(
-#             row=i,
-#             column=1,
-#             padx=5,
-#             pady=3
-#         )
-
-#         elementos[campo] = entrada
-
-# --- GRÁFICA INICIAL VACÍA ---
-fig_inicial, ax_inicial = plt.subplots(figsize=(7, 7))
-ax_inicial.set_title("Esperando RUT...")
-ax_inicial.axhline(0, color='black', linewidth=0.5)
-ax_inicial.axvline(0, color='black', linewidth=0.5)
-ax_inicial.grid(True)
-ax_inicial.set_aspect("equal")
-
-ax_inicial.set_xlim(-10, 10)
-ax_inicial.set_ylim(-10, 10)
-
-canvas_inicial = FigureCanvasTkAgg(fig_inicial, master=frame_grafica)
-canvas_inicial.draw()
-canvas_inicial.get_tk_widget().pack(fill="both", expand=True)
-
-# ==========================================
-# GRAFICA LIMITES
-# ==========================================
-
-frame_grafica_limites = tk.Frame(frame_limites)
-
-frame_grafica_limites.pack(
-    fill="both",
-    expand=True
-)
-
-frame_explicacion_limites = tk.Frame(tab_limites, bg=COLOR_PANEL)
-frame_explicacion_limites.pack(side="left", fill="both", expand=True, padx=10, pady=10)
-
-label_limites_titulo = tk.Label(
-    frame_explicacion_limites,
-    text="Justificación Matemática del Límite",
-    font=("Arial", 12, "bold"),
-    bg=COLOR_PANEL,
-    fg="white"
-)
-label_limites_titulo.pack(pady=5)
-
-texto_limites_explicacion = tk.Text(
-    frame_explicacion_limites,
-    width=45,
-    height=20,
-    bg="#151521",
-    fg="white",
-    font=("Consolas", 10)
-)
-texto_limites_explicacion.pack(fill="both", expand=True, padx=5, pady=5)
-texto_limites_explicacion.config(state="disabled")
-
-
-# ------------------------------------
-
-# =====================================================
-# TABLA LIMITES
-# =====================================================
-
-tabla = ttk.Treeview(
-    frame_limites,
-    columns=("x", "y"),
-    show="headings",
-    height=12
-)
-
-tabla.heading("x", text="x")
-tabla.heading("y", text="f(x)")
-
-tabla.column("x", width=150)
-tabla.column("y", width=150)
-
-tabla.pack(pady=20)
-
-
-
-
-
-
-# =====================================================
-# CAMPOS VACIOS DEFENSA
-# =====================================================
-
-frame_defensa = tk.Frame(
-    frame_limites
-)
-
-frame_defensa.pack(pady=20)
-
-campos = [
-    "Límite izquierda",
-    "Límite derecha",
-    "¿Existe límite?",
-    "Valor función",
-    "¿Es continua?",
-    "Tipo discontinuidad",
-    "Justificación"
-]
-
-entries = {}
-
-for campo in campos:
-
-    fila = tk.Frame(frame_defensa)
-
-    fila.pack(anchor="w", pady=5)
-
-    label = tk.Label(
-        fila,
-        text=campo + ":",
-        width=20,
-        anchor="w"
-    )
-
-    label.pack(side="left")
-
-    entrada = tk.Entry(
-        fila,
-        width=40
-    )
-
-    entrada.pack(side="left")
-
-    entries[campo] = entrada
-
-
-    
-
-
-# =====================================================
-# FUNCION PRINCIPAL
-# =====================================================
-
-def generar():
-
-    # =================================
-    # LIMPIAR SIEMPRE
-    # =================================
-
-    resultado_texto.delete("1.0", tk.END)
-
-    for entrada in entries.values():
-        entrada.delete(0, tk.END)
-
-    for item in tabla.get_children():
-        tabla.delete(item)
-
-    # =================================
-    # OBTENER RUT
-    # =================================
-
-    rut = entrada_rut.get()
-
-    if rut.strip() == "":
-
-        resultado_texto.insert(
-            tk.END,
-            "====================================\n"
-        )
-
-        resultado_texto.insert(
-            tk.END,
-            " ERROR\n"
-        )
-
-        resultado_texto.insert(
-            tk.END,
-            "====================================\n\n"
-        )
-
-        resultado_texto.insert(
-            tk.END,
-            "Debe ingresar un RUT.\n"
-        )
-
-        return
-
-    # =================================================
-    # LIMPIAR
-    # =================================================
-
-    resultado_texto.delete("1.0", tk.END)
-
-    for item in tabla.get_children():
-
-        tabla.delete(item)
-
-    # =================================================
-    # OBTENER DATOS
-    # =================================================
-
-    d, dv = obtener_digitos(rut)
-
-    if d is None:
-
-        resultado_texto.delete("1.0", tk.END)
-
-        resultado_texto.insert(
-            tk.END,
-            "====================================\n"
-            )
-
-        resultado_texto.insert(
-            tk.END,
-            " ERROR\n"
-            )
-
-        resultado_texto.insert(
-            tk.END,
-            "====================================\n\n"
-            )
-
-        resultado_texto.insert(
-            tk.END,
-            "Formato de RUT inválido.\n"
-        )
-
-        return
-
-    v = calcular_v(dv)
-
-    A, B, C, D, E, procedimiento_conica = construir_ecuacion_detallado(d, v)
-
-    
-    resultado_texto.insert(
-    tk.END,
-    procedimiento_conica + "\n\n"
-)
-
-    tipo = clasificar_conica(A, B)
-    
-    #actualizar_campos_conica(tipo)
-
-    # =================================================
-    # TEXTO
-    # =================================================
-
-    resultado_texto.insert(
-            tk.END,
-            "====================================\n"
-        )
-
-    resultado_texto.insert(
-            tk.END,
-            " ECUACION GENERAL\n"
-        )
-
-    resultado_texto.insert(
-            tk.END,
-            "====================================\n\n"
-        )
-
-    resultado_texto.insert(
-            tk.END,
-            ecuacion_general(A, B, C, D, E)
-        )
-
-    resultado_texto.insert(
-            tk.END,
-            f"\n\nTipo de cónica: {tipo}\n"
-        )
-
-    resultado_texto.insert(
-            tk.END,
-            "\n====================================\n"
-        )
-
-    resultado_texto.insert(
-            tk.END,
-            " ANALISIS DE LIMITES\n"
-        )
-
-    resultado_texto.insert(
-        tk.END,
-        "====================================\n\n"
-    )
-
-    # =================================================
-    # FUNCIONES
-    # =================================================
-
-    datos_funcion = construir_funcion(d)
-
-    resultado_texto.insert(
-        tk.END,
-        f"\nTipo de discontinuidad: {datos_funcion['tipo']}\n"
-    )
-
-    resultado_texto.insert(
-        tk.END,
-        f"Punto de análisis: x = {datos_funcion['a']}\n"
-    )
-
-    resultado_texto.insert(
-    tk.END,
-    "\n====================================\n"
-    )
-
-    resultado_texto.insert(
-        tk.END,
-        " FUNCIÓN GENERADA\n"
-    )
-
-    resultado_texto.insert(
-        tk.END,
-        "====================================\n\n"
-    )
-
-    resultado_texto.insert(
-        tk.END,
-        f"{datos_funcion['funcion']}\n"
-    )
-
-    resultado_texto.insert(
-        tk.END,
-        "\n====================================\n"
-    )
-
-    resultado_texto.insert(
-        tk.END,
-        " REGLA APLICADA\n"
-    )
-
-    resultado_texto.insert(
-        tk.END,
-        "====================================\n\n"
-    )
-
-    resultado_texto.insert(
-        tk.END,
-        f"{datos_funcion['regla']}\n"
-    )
-
-    resultado_limites = analizar_limites(d)
-
-    izquierda = resultado_limites["izquierda"]
-    derecha = resultado_limites["derecha"]
-
-    valor_funcion = resultado_limites["valor_funcion"]
-    existe = resultado_limites["existe_limite"]
-    continua = resultado_limites["continua"]
-
-    resultado_texto.insert(
-        tk.END,
-        f"\nLímite por izquierda: {izquierda}\n"
-    )
-
-    resultado_texto.insert(
-        tk.END,
-        f"Límite por derecha: {derecha}\n"
-    )
-    if izquierda == derecha:
-
-        resultado_texto.insert(
-            tk.END,
-            "\nEl límite existe.\n"
+    elif tipo_discontinuidad == "salto":
+        conclusion = (
+            f"Los limites laterales son finitos y distintos ({izq_val} != {der_val}). "
+            "El limite general no existe. Hay discontinuidad de salto."
         )
     else:
-
-        resultado_texto.insert(
-            tk.END,
-            "\nEl límite no existe.\n"
+        conclusion = (
+            f"La funcion diverge cerca de x = {punto_a}. "
+            "Hay una asintota vertical y discontinuidad infinita."
         )
 
-    if datos_funcion["tipo"] == "removible":
-
-        resultado_texto.insert(
-            tk.END,
-            "Discontinuidad removible.\n"
-        )
-
-    elif datos_funcion["tipo"] == "salto":
-
-        resultado_texto.insert(
-            tk.END,
-            "Discontinuidad de salto.\n"
-        )
-
-    elif datos_funcion["tipo"] == "infinita":
-
-        resultado_texto.insert(
-            tk.END,
-            "Discontinuidad infinita.\n"
-        )
-
-        resultado_texto.insert(
-            tk.END,
-            f"Asintota vertical: x = {datos_funcion['a']}\n"
-        )
-
-        
+    return (
+        "LIMITES\n"
+        "====================================\n"
+        "Construccion\n"
+        f"{datos_funcion['procedimiento']}\n\n"
+        "Limites laterales\n"
+        f"Limite por izquierda: {izq_val}\n"
+        f"Limite por derecha:   {der_val}\n"
+        f"Existe limite:        {'Si' if resultado_limites['existe_limite'] else 'No'}\n"
+        f"Valor funcion:        {resultado_limites['valor_funcion']}\n"
+        f"Continua:             {'Si' if resultado_limites['continua'] else 'No'}\n\n"
+        "Evidencia computacional\n"
+        f"{chr(10).join(evidencia)}\n\n"
+        "Grafica\n"
+        "Disponible en la pestaña Grafica > Limites.\n\n"
+        "Conclusion\n"
+        f"{conclusion}\n"
+    )
 
 
+# =====================================================
+# APLICACION
+# =====================================================
 
+def iniciar_app():
+    ventana = tk.Tk()
+    aplicar_estilos()
 
-    tabla_datos = obtener_tabla(datos_funcion)
+    ventana.title("Proyecto EID - Calculo 1")
+    ventana.geometry("1240x820")
+    ventana.minsize(1050, 720)
+    ventana.configure(bg=COLOR_FONDO)
+    ventana.grid_columnconfigure(1, weight=1)
+    ventana.grid_rowconfigure(0, weight=1)
 
+    panel_izq = tk.Frame(ventana, bg=COLOR_PANEL, width=310)
+    panel_izq.grid(row=0, column=0, sticky="ns")
+    panel_izq.grid_propagate(False)
 
-    for fila in tabla_datos:
+    panel_der = tk.Frame(ventana, bg=COLOR_FONDO)
+    panel_der.grid(row=0, column=1, sticky="nsew")
+    panel_der.grid_columnconfigure(0, weight=1)
+    panel_der.grid_rowconfigure(0, weight=3)
+    panel_der.grid_rowconfigure(1, weight=2)
 
-        tabla.insert(
-            "",
-            "end",
-            values=(
-                fila["x"],
-                fila["y"]
+    tk.Label(
+        panel_izq,
+        text="Proyecto EID",
+        bg=COLOR_PANEL,
+        fg=COLOR_TEXTO,
+        font=FUENTE_TITULO,
+        anchor="w",
+    ).pack(fill="x", padx=18, pady=(18, 4))
+
+    tk.Label(
+        panel_izq,
+        text="Menu lateral",
+        bg=COLOR_PANEL,
+        fg=COLOR_MUTED,
+        font=FUENTE,
+        anchor="w",
+    ).pack(fill="x", padx=18)
+
+    seccion(panel_izq, "RUT")
+    tk.Label(
+        panel_izq,
+        text="Ingreso",
+        bg=COLOR_PANEL,
+        fg=COLOR_TEXTO,
+        font=FUENTE,
+        anchor="w",
+    ).pack(fill="x", padx=18, pady=(0, 4))
+
+    entrada_rut = tk.Entry(
+        panel_izq,
+        width=24,
+        font=("Arial", 12),
+        relief="flat",
+        bg="#f7fffc",
+        fg="#0b2528",
+        insertbackground="#0b2528",
+        bd=0,
+        highlightthickness=2,
+        highlightbackground="#12746d",
+        highlightcolor="#33cabb",
+    )
+    entrada_rut.pack(fill="x", padx=18, ipady=7)
+
+    seccion(panel_izq, "Secciones")
+
+    estado_rut = crear_estado(panel_izq, "Validacion", "Sin RUT ingresado")
+    estado_conica = crear_estado(panel_izq, "Conicas", "Esperando generacion")
+    estado_limite = crear_estado(panel_izq, "Limites", "Esperando generacion")
+
+    frame_grafica = tk.LabelFrame(
+        panel_der,
+        text="Grafica",
+        bg=COLOR_SUPERFICIE,
+        fg="#0b2528",
+        font=FUENTE_SECCION,
+        padx=10,
+        pady=10,
+        bd=1,
+        relief="solid",
+    )
+    frame_grafica.grid(row=0, column=0, sticky="nsew", padx=14, pady=(14, 7))
+    frame_grafica.grid_columnconfigure(0, weight=1)
+    frame_grafica.grid_rowconfigure(0, weight=1)
+
+    tabs_grafica = ttk.Notebook(frame_grafica)
+    tabs_grafica.grid(row=0, column=0, sticky="nsew")
+
+    tab_grafica_conica = tk.Frame(tabs_grafica, bg=COLOR_SUPERFICIE)
+    tab_grafica_original = tk.Frame(tabs_grafica, bg=COLOR_SUPERFICIE)
+    tab_grafica_transformada = tk.Frame(tabs_grafica, bg=COLOR_SUPERFICIE)
+    tab_grafica_limites = tk.Frame(tabs_grafica, bg=COLOR_SUPERFICIE)
+
+    tabs_grafica.add(tab_grafica_conica, text="Conica")
+    tabs_grafica.add(tab_grafica_original, text="Original")
+    tabs_grafica.add(tab_grafica_transformada, text="Transformada")
+    tabs_grafica.add(tab_grafica_limites, text="Limites")
+
+    frame_evaluacion = tk.LabelFrame(
+        panel_der,
+        text="Evaluacion",
+        bg=COLOR_SUPERFICIE,
+        fg="#0b2528",
+        font=FUENTE_SECCION,
+        padx=10,
+        pady=10,
+        bd=1,
+        relief="solid",
+    )
+    frame_evaluacion.grid(row=1, column=0, sticky="nsew", padx=14, pady=(7, 14))
+    frame_evaluacion.grid_columnconfigure(0, weight=1)
+    frame_evaluacion.grid_rowconfigure(0, weight=1)
+
+    tabs_evaluacion = ttk.Notebook(frame_evaluacion)
+    tabs_evaluacion.grid(row=0, column=0, sticky="nsew")
+
+    tab_rut = tk.Frame(tabs_evaluacion, bg=COLOR_SUPERFICIE)
+    tab_conicas = tk.Frame(tabs_evaluacion, bg=COLOR_SUPERFICIE)
+    tab_transformaciones = tk.Frame(tabs_evaluacion, bg=COLOR_SUPERFICIE)
+    tab_limites = tk.Frame(tabs_evaluacion, bg=COLOR_SUPERFICIE)
+
+    tabs_evaluacion.add(tab_rut, text="RUT")
+    tabs_evaluacion.add(tab_conicas, text="Conicas")
+    tabs_evaluacion.add(tab_transformaciones, text="Transformaciones")
+    tabs_evaluacion.add(tab_limites, text="Limites")
+
+    texto_rut = crear_texto(tab_rut)
+
+    panel_conicas = tk.PanedWindow(tab_conicas, orient="horizontal", bg=COLOR_SUPERFICIE, sashwidth=6)
+    panel_conicas.pack(fill="both", expand=True)
+    frame_texto_conicas = tk.Frame(panel_conicas, bg=COLOR_SUPERFICIE)
+    frame_eval_conicas = tk.Frame(panel_conicas, bg=COLOR_SUPERFICIE)
+    panel_conicas.add(frame_texto_conicas, minsize=420)
+    panel_conicas.add(frame_eval_conicas, minsize=360)
+
+    texto_conicas = crear_texto(frame_texto_conicas)
+    titulo_panel(frame_eval_conicas, "Evaluacion interactiva de elementos geometricos")
+    frame_campos_dinamicos = tk.Frame(frame_eval_conicas, bg=COLOR_SUPERFICIE)
+    frame_campos_dinamicos.pack(fill="both", expand=True, padx=0, pady=(4, 10))
+
+    texto_transformaciones = crear_texto(tab_transformaciones)
+
+    frame_limites_layout = tk.PanedWindow(tab_limites, orient="horizontal", bg=COLOR_SUPERFICIE, sashwidth=6)
+    frame_limites_layout.pack(fill="both", expand=True)
+    frame_texto_limites = tk.Frame(frame_limites_layout, bg=COLOR_SUPERFICIE)
+    frame_tabla_limites = tk.Frame(frame_limites_layout, bg=COLOR_SUPERFICIE)
+    frame_limites_layout.add(frame_texto_limites, minsize=480)
+    frame_limites_layout.add(frame_tabla_limites, minsize=280)
+
+    texto_limites = crear_texto(frame_texto_limites)
+    titulo_panel(frame_tabla_limites, "Evidencia computacional")
+    tabla = ttk.Treeview(frame_tabla_limites, columns=("x", "y"), show="headings", height=10)
+    tabla.heading("x", text="x")
+    tabla.heading("y", text="f(x)")
+    tabla.column("x", width=120, anchor="center")
+    tabla.column("y", width=120, anchor="center")
+    tabla.pack(fill="both", expand=True, padx=10, pady=10)
+
+    escribir(texto_rut, "RUT\n====================================\nIngreso\nEsperando datos.\n\nValidacion\nPendiente.\n\nProcedimiento modulo 11\nPendiente.\n")
+    escribir(texto_conicas, "CONICAS\n====================================\nEcuacion general\nPendiente.\n\nProcedimiento\nPendiente.\n\nForma canonica\nPendiente.\n\nClasificacion\nPendiente.\n\nGrafica\nPendiente.\n")
+    escribir(texto_transformaciones, "TRANSFORMACIONES\n====================================\nProcedimiento\nPendiente.\n\nGrafica original\nPendiente.\n\nGrafica transformada\nPendiente.\n")
+    escribir(texto_limites, "LIMITES\n====================================\nConstruccion\nPendiente.\n\nLimites laterales\nPendiente.\n\nEvidencia computacional\nPendiente.\n\nGrafica\nPendiente.\n\nConclusion\nPendiente.\n")
+
+    mostrar_figura(tab_grafica_conica, figura_inicial("Esperando RUT"))
+    mostrar_figura(tab_grafica_original, figura_inicial("Grafica original"))
+    mostrar_figura(tab_grafica_transformada, figura_inicial("Grafica transformada"))
+    mostrar_figura(tab_grafica_limites, figura_inicial("Limites"))
+
+    def seleccionar(indice_eval, indice_grafica=None):
+        tabs_evaluacion.select(indice_eval)
+        if indice_grafica is not None:
+            tabs_grafica.select(indice_grafica)
+
+    boton_menu(panel_izq, "RUT: ingreso, validacion, modulo 11", lambda: seleccionar(tab_rut, None))
+    boton_menu(panel_izq, "Conicas: ecuacion, forma, clasificacion", lambda: seleccionar(tab_conicas, tab_grafica_conica))
+    boton_menu(panel_izq, "Transformaciones: original y transformada", lambda: seleccionar(tab_transformaciones, tab_grafica_original))
+    boton_menu(panel_izq, "Limites: laterales y evidencia", lambda: seleccionar(tab_limites, tab_grafica_limites))
+
+    def generar():
+        rut_ingresado = entrada_rut.get().strip()
+
+        plt.close("all")
+
+        for item in tabla.get_children():
+            tabla.delete(item)
+
+        limpiar_frame(frame_campos_dinamicos)
+
+        valido, detalle_rut = validar_rut_detallado(rut_ingresado)
+        escribir(texto_rut, construir_reporte_rut(rut_ingresado or "(vacio)", valido, detalle_rut))
+
+        if not rut_ingresado:
+            estado_rut.config(text="Debe ingresar un RUT")
+            tabs_evaluacion.select(tab_rut)
+            return
+
+        d, dv = obtener_digitos(rut_ingresado)
+        if d is None:
+            estado_rut.config(text="Formato invalido")
+            tabs_evaluacion.select(tab_rut)
+            return
+
+        estado_rut.config(text="Valido" if valido else "Invalido")
+
+        v = calcular_v(dv)
+        A, B, C, D, E, procedimiento_conica = construir_ecuacion_detallado(d, v)
+        tipo = clasificar_conica(A, B)
+        tipo_grafica = tipo.lower()
+
+        escribir(texto_conicas, construir_reporte_conicas(A, B, C, D, E, procedimiento_conica, tipo))
+        escribir(texto_transformaciones, construir_reporte_transformaciones(A, B, C, D, E))
+
+        estado_conica.config(text=f"{tipo}: {ecuacion_general(A, B, C, D, E)}")
+        mostrar_campos_evaluacion(frame_campos_dinamicos, tipo_grafica, A, B, C, D, E)
+
+        fig_conica = graficar_desde_ecuacion(tipo_grafica, A, B, C, D, E)
+        fig_original = graficar_desde_ecuacion(tipo_grafica, A, B, C, D, E)
+        fig_transformada = graficar_desde_ecuacion(tipo_grafica, A, B, C, D, E)
+
+        if fig_conica.axes:
+            fig_conica.axes[0].set_title("Conica clasificada")
+        if fig_original.axes:
+            fig_original.axes[0].set_title("Grafica original: ecuacion general")
+        if fig_transformada.axes:
+            fig_transformada.axes[0].set_title("Grafica transformada: forma canonica")
+
+        mostrar_figura(tab_grafica_conica, fig_conica)
+        mostrar_figura(tab_grafica_original, fig_original)
+        mostrar_figura(tab_grafica_transformada, fig_transformada)
+
+        datos_funcion = construir_funcion(d)
+        resultado_limites = analizar_limites(d)
+        tabla_datos = obtener_tabla(datos_funcion)
+
+        for fila in tabla_datos:
+            tabla.insert("", "end", values=(fila["x"], fila["y"]))
+
+        escribir(texto_limites, construir_reporte_limites(datos_funcion, resultado_limites, tabla_datos))
+        estado_limite.config(
+            text=(
+                f"x = {datos_funcion['a']} | "
+                f"izq: {resultado_limites['izquierda']} | "
+                f"der: {resultado_limites['derecha']}"
             )
         )
 
-    # =================================================
-    # GRAFICA
-    # =================================================
+        fig_limites = graficar_funcion(datos_funcion)
+        mostrar_figura(tab_grafica_limites, fig_limites)
 
-    for widget in frame_grafica.winfo_children():
-        widget.destroy()
-    
-    plt.close("all")
+        tabs_evaluacion.select(tab_conicas)
+        tabs_grafica.select(tab_grafica_conica)
 
-    fig = graficar_desde_ecuacion(tipo.lower(), A, B, C, D, E)
-
-    if fig is None:
-        label_error = tk.Label(
-            frame_grafica, 
-            text="Caso degenerado detectado.\nNo se puede generar gráfica real.", 
-            font=("Arial", 14),
-            bg="white"
-        )
-        label_error.pack(expand=True)
-        return
-    
-    canvas = FigureCanvasTkAgg(fig, master=frame_grafica)
-    canvas.draw()
-    canvas.get_tk_widget().pack(fill="both", expand=True)
-
-    mostrar_campos_evaluacion(tipo.lower(), A, B, C, D, E)
-
-    # ==========================================
-    # GRAFICA DE LIMITES
-    # ==========================================
-
-    for widget in frame_grafica_limites.winfo_children():
-        widget.destroy()
-        
-    plt.close("all")
-
-    fig_limites = graficar_funcion(datos_funcion)
-
-    canvas_limites = FigureCanvasTkAgg(
-        fig_limites,
-        master=frame_grafica_limites
+    boton_generar = tk.Button(
+        panel_izq,
+        text="Generar proyecto",
+        command=generar,
+        bg=COLOR_BOTON,
+        activebackground=COLOR_BOTON_HOVER,
+        fg="#ffffff",
+        activeforeground="#ffffff",
+        font=("Arial", 12, "bold"),
+        relief="flat",
+        padx=16,
+        pady=13,
+        bd=0,
+        highlightthickness=2,
+        highlightbackground="#66cfc3",
+        highlightcolor="#d4fff6",
+        cursor="hand2",
     )
+    boton_generar.pack(fill="x", padx=18, pady=(18, 8))
 
-    canvas_limites.draw()
+    entrada_rut.bind("<Return>", lambda _e: generar())
 
-    canvas_limites.get_tk_widget().pack(
-        fill="both",
-        expand=True
-    )
-
-    # ==================================================
-    # INTEGRACIÓN DE JUSTIFICACIÓN DE LÍMITES EN LA UI
-    # ==================================================
-    
-    texto_limites_explicacion.config(state="normal")
-    texto_limites_explicacion.delete("1.0", tk.END)
-    
-    resto_calculado = d[7] % 3 
-    tipo_discontinuidad = datos_funcion["tipo"]
-    punto_a = datos_funcion["a"]
-    izq_val = limite_izquierda(datos_funcion)
-    der_val = limite_derecha(datos_funcion)
-    
-    reporte = "========================================================\n"
-    reporte += "              REPORTE ANALÍTICO DE LÍMITES              \n"
-    reporte += "========================================================\n\n"
-    reporte += f"• Punto Crítico de Análisis (a): x = {punto_a}\n"
-    reporte += f"• Criterio del RUT (d8 % 3): {resto_calculado}\n"
-    reporte += f"• Tipo de Discontinuidad: {tipo_discontinuidad.upper()}\n\n"
-    reporte += f"-> Límite por la izquierda (x -> {punto_a}-): {izq_val}\n"
-    reporte += f"-> Límite por la derecha   (x -> {punto_a}+): {der_val}\n\n"
-    reporte += "--------------------------------------------------------\n"
-    reporte += "CONCLUSIÓN Y JUSTIFICACIÓN MATEMÁTICA:\n"
-    reporte += "--------------------------------------------------------\n\n"
-    
-    if tipo_discontinuidad == "removible":
-        reporte += f"Como los límites laterales existen y son iguales ({izq_val} = {der_val}),\n"
-        reporte += f"el límite general EXISTE y vale {izq_val}.\n\n"
-        reporte += f"Sin embargo, la función NO está definida en el punto x = {punto_a}.\n"
-        reporte += f"Por lo tanto, se presenta una DISCONTINUIDAD REMOVIBLE."
-        
-    elif tipo_discontinuidad == "salto":
-        reporte += f"Al aproximarse al punto crítico x = {punto_a}, los límites\n"
-        reporte += f"laterales tienden a valores finitos pero distintos ({izq_val} ≠ {der_val}).\n\n"
-        reporte += f"Dado que los caminos no coinciden, el límite general NO EXISTE.\n"
-        reporte += f"Esto genera una DISCONTINUIDAD DE SALTO FINITO."
-        
-    elif tipo_discontinuidad == "infinita":
-        reporte += f"Se observa que al menos uno de los límites laterales crece\n"
-        reporte += f"o decrece sin cota hacia el infinito.\n\n"
-        reporte += f"La recta x = {punto_a} actúa como ASÍNTOTA VERTICAL, generando\n"
-        reporte += f"una DISCONTINUIDAD INFINITA."
-
-    texto_limites_explicacion.insert("1.0", reporte)
-    texto_limites_explicacion.config(state="disabled")
-    
-# =====================================================
-# BOTON
-# =====================================================
-
-boton = tk.Button(
-    panel_izq,
-    text="Generar Proyecto",
-    command=generar,
-    bg=COLOR_BOTON,
-    fg="white",
-    font=("Arial", 12, "bold"),
-    width=25,
-    height=2
-)
-
-boton.pack(pady=20)
-
-
-# =====================================================
-# FOOTER
-# =====================================================
-
-footer = tk.Label(
-    panel_izq,
-    text="MAT1186 - Proyecto EID",
-    bg=COLOR_PANEL,
-    fg="gray"
-)
-
-footer.pack(side="bottom", pady=10)
-
-
-# =====================================================
-
-try:
+    tk.Label(
+        panel_izq,
+        text="MAT1186 - Proyecto EID",
+        bg=COLOR_PANEL,
+        fg=COLOR_MUTED,
+        font=("Arial", 9),
+    ).pack(side="bottom", pady=12)
 
     ventana.mainloop()
 
-except KeyboardInterrupt:
 
-    print("Programa finalizado.")
-
+if __name__ == "__main__":
+    iniciar_app()
