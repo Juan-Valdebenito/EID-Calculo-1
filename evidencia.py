@@ -119,6 +119,16 @@ def generar_evidencia_texto(datos):
             "Discontinuidad infinita.\n"
         )
 
+    elif tipo == "continua":
+        texto += (
+            "Interpretación:\n"
+            "Los valores de la tabla se aproximan exactamente al mismo número\n"
+            "tanto por la izquierda como por la derecha del punto crítico.\n\n"
+            "Además, la función está definida en x = a y coincide con dicho límite.\n\n"
+            "Conclusión:\n"
+            "La función es continua en todo su dominio.\n"
+        )
+
     return texto
 
 

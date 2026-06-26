@@ -66,36 +66,37 @@ def construir_funcion(d):
         }
 
     # =================================================
-    # SALTO
+    # SALTO O CONTINUA
     # =================================================
 
     elif resto == 1:
-
-        procedimiento.append(
-            "Como d8 deja residuo 1 se genera una discontinuidad de salto."
-        )
+        
+        if d2 == d4:
+            procedimiento.append(
+                f"Como d8 % 3 = 1, pero d2 = d4 = {d2}, ambos tramos son idénticos."
+            )
+            procedimiento.append(
+                "Por lo tanto, los límites laterales coincidirán y la función es CONTINUA."
+            )
+            tipo_funcion = "continua"
+        else:
+            procedimiento.append(
+                f"Como d8 % 3 = 1 y d2 != d4 ({d2} != {d4}), se genera una discontinuidad de salto."
+            )
+            tipo_funcion = "salto"
 
         procedimiento.append("")
-        procedimiento.append("Funcion por tramos:")
-        procedimiento.append(
-            f"f(x)=x+{d2} si x<{a}"
-        )
+        procedimiento.append(f"f(x) = x + {d2}   si x < {a}")
+        procedimiento.append(f"f(x) = x + {d4}   si x >= {a}")
 
-        procedimiento.append(
-            f"f(x)=x+{d4} si x≥{a}"
-        )
-
-        return {
-            "tipo": "salto",
+        datos = {
+            "tipo": tipo_funcion,  # Guardará "continua" o "salto" dinámicamente
             "a": a,
             "d2": d2,
             "d4": d4,
-            "funcion":
-                f"x+{d2} si x<{a}\n"
-                f"x+{d4} si x≥{a}",
-            "regla": f"{d8}%3 = 1",
             "procedimiento": "\n".join(procedimiento)
         }
+        return datos
 
     # =================================================
     # INFINITA
@@ -148,10 +149,10 @@ def evaluar_funcion(x, datos):
         return numerador / denominador
 
     # ==============================================
-    # SALTO
+    # SALTO O CONTINUA
     # ==============================================
 
-    elif tipo == "salto":
+    elif tipo == "salto" or tipo == "continua":
 
         a = datos["a"]
 
@@ -189,7 +190,7 @@ def limite_izquierda(datos):
 
         return a + datos["d1"]
 
-    elif tipo == "salto":
+    elif tipo == "salto" or tipo == "continua":
 
         return a + datos["d2"]
 
@@ -214,7 +215,7 @@ def limite_derecha(datos):
 
         return a + datos["d1"]
 
-    elif tipo == "salto":
+    elif tipo == "salto" or tipo == "continua":
 
         return a + datos["d4"]
 
@@ -286,7 +287,35 @@ def justificar(datos):
     texto.append("===================================")
     texto.append("")
 
-    if tipo == "removible":
+    if tipo == "continua":
+
+        texto.append(
+            f"Limite izquierdo = {izq}"
+        )
+
+        texto.append(
+            f"Limite derecho = {der}"
+        )
+
+        texto.append("")
+
+        texto.append(
+            "Los limites laterales son perfectamente iguales."
+        )
+
+        texto.append(
+            "Por lo tanto el limite existe."
+        )
+
+        texto.append(
+            f"El valor de la funcion en el punto f(a) existe y es igual a {valor_funcion_en_punto(datos)}."
+        )
+
+        texto.append(
+            "Resultado: La funcion es CONTINUA en el punto critico."
+        )
+
+    elif tipo == "removible":
 
         texto.append(
             f"Limite izquierdo = {izq}"
