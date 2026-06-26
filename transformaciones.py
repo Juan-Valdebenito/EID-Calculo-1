@@ -105,6 +105,51 @@ def ecuacion_general(A, B, C, D, E):
 # FORMA CANÓNICA
 # =====================================================
 
+def canonica_a_general(h, k, a2, b2):
+
+    if a2 == 0 or b2 == 0:
+        raise ValueError("Los denominadores a2 y b2 no pueden ser cero.")
+
+    A = b2
+    B = a2
+    C = -2 * h * b2
+    D = -2 * k * a2
+    E = (b2 * h ** 2) + (a2 * k ** 2) - (a2 * b2)
+
+    return A, B, C, D, E
+
+
+def procedimiento_canonica_a_general(h, k, a2, b2):
+
+    A, B, C, D, E = canonica_a_general(h, k, a2, b2)
+
+    texto = []
+
+    texto.append("Forma canonica original:")
+    texto.append(
+        f"(x-({fmt(h)}))²/{fmt(a2)} + (y-({fmt(k)}))²/{fmt(b2)} = 1"
+    )
+    texto.append("")
+
+    texto.append("1. Multiplicar cruzado por los denominadores:")
+    texto.append(
+        f"{fmt(b2)}(x-({fmt(h)}))² + {fmt(a2)}(y-({fmt(k)}))² = {fmt(a2 * b2)}"
+    )
+    texto.append("")
+
+    texto.append("2. Desarrollar los binomios al cuadrado:")
+    texto.append(
+        f"{fmt(b2)}(x² - {fmt(2 * h)}x + {fmt(h ** 2)}) + "
+        f"{fmt(a2)}(y² - {fmt(2 * k)}y + {fmt(k ** 2)}) = {fmt(a2 * b2)}"
+    )
+    texto.append("")
+
+    texto.append("3. Distribuir, ordenar e igualar a cero:")
+    texto.append(ecuacion_general(A, B, C, D, E))
+
+    return "\n".join(texto)
+
+
 def forma_canonica(A, B, C, D, E):
 
     texto = []

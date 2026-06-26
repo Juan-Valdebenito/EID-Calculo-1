@@ -178,6 +178,20 @@ def obtener_ecuacion_general(A, B, C, D, E):
 # FORMA CANÓNICA DETALLADA
 # =====================================================
 
+def canonica_a_general(h, k, a2, b2):
+
+    if a2 == 0 or b2 == 0:
+        raise ValueError("Los denominadores a2 y b2 no pueden ser cero.")
+
+    A = b2
+    B = a2
+    C = -2 * h * b2
+    D = -2 * k * a2
+    E = (b2 * h ** 2) + (a2 * k ** 2) - (a2 * b2)
+
+    return A, B, C, D, E
+
+
 def obtener_forma_canonica(A, B, C, D, E):
 
     pasos = []

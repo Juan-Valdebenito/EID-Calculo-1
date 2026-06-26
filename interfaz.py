@@ -10,7 +10,7 @@ from funciones import analizar_limites, construir_funcion
 from grafica_limites import graficar_funcion
 from graficas import graficar_desde_ecuacion
 from rut import calcular_v, obtener_digitos, validar_rut_detallado
-from transformaciones import ecuacion_general, forma_canonica
+from transformaciones import ecuacion_general, forma_canonica, procedimiento_canonica_a_general
 
 
 # =====================================================
