@@ -191,76 +191,450 @@ def canonica_a_general(h, k, a2, b2):
 
     return A, B, C, D, E
 
-# =====================================================================
-# NUEVA FUNCIÓN AUXILIAR (TAREA 5)
-# =====================================================================
-def generar_procedimiento_paso_a_paso(A, B, C, D, E, tipo):
-    pasos_alg = []
-    pasos_alg.append("====================================")
-    pasos_alg.append(" DESARROLLO ALGEBRAICO PASO A PASO")
-    pasos_alg.append("====================================")
-    
-    def signo(val, variable=""):
-        if val == 0: return ""
-        return f" {'+' if val > 0 else '-'} {abs(val)}{variable}"
 
-    ec_ini = f"{A}x²" if A != 0 else ""
+# =====================================================
+# HELPERS DE FORMATO Y CONSTRUCCIÓN DE EXPRESIONES
+# =====================================================
+
+def _f(val):
+    """Número sin decimales innecesarios: 2.0 → '2', 2.5 → '2.5'"""
+    if isinstance(val, float) and val == int(val):
+        return str(int(val))
+    return str(round(val, 4)).rstrip('0').rstrip('.')
+
+
+def _termino(coef, variable="", primero=False):
+    """
+    Construye un término para una expresión algebraica.
+    primero=True → omite el '+' inicial (para el primer término).
+    """
+    if coef == 0:
+        return ""
+    signo = "+" if coef > 0 else "-"
+    valor = abs(coef)
+    val_str = _f(valor) if (valor != 1 or variable == "") else ""
+    parte = f"{val_str}{variable}"
+    if primero:
+        return f"-{parte}" if coef < 0 else parte
+    return f" {signo} {parte}"
+
+
+def _ec_general(A, B, C, D, E):
+    """Construye la ecuación general como string legible."""
+    partes = []
+    for coef, var in [(A, "x²"), (B, "y²"), (C, "x"), (D, "y"), (E, "")]:
+        t = _termino(coef, var, primero=(len(partes) == 0))
+        if t:
+            partes.append(t)
+    return ("".join(partes) + " = 0") if partes else "0 = 0"
+
+
+def _lado_sin_cte(A, B, C, D):
+    """Parte izquierda sin término independiente."""
+    partes = []
+    for coef, var in [(A, "x²"), (B, "y²"), (C, "x"), (D, "y")]:
+        t = _termino(coef, var, primero=(len(partes) == 0))
+        if t:
+            partes.append(t)
+    return "".join(partes) if partes else "0"
+
+
+def _grupo_x(A, C):
+    """Agrupa: Ax² + Cx"""
+    partes = []
+    if A != 0:
+        partes.append(_termino(A, "x²", primero=True))
+    if C != 0:
+        partes.append(_termino(C, "x", primero=(len(partes) == 0)))
+    return "".join(partes) if partes else "0"
+
+
+def _grupo_y(B, D):
+    """Agrupa: By² + Dy"""
+    partes = []
     if B != 0:
-        ec_ini += f" + {B}y²" if B > 0 else f" - {abs(B)}y²"
-    ec_ini += signo(C, "x") + signo(D, "y") + signo(E) + " = 0"
-    pasos_alg.append(f"1) Ecuación inicial:\n   {ec_ini}\n")
+        partes.append(_termino(B, "y²", primero=True))
+    if D != 0:
+        partes.append(_termino(D, "y", primero=(len(partes) == 0)))
+    return "".join(partes) if partes else "0"
 
+
+def _coef_grupo(coef):
+    """Muestra el coeficiente de un grupo con signo: '+ 4(...)' o '- 4(...)'"""
+    if coef == 1:
+        return ""
+    if coef == -1:
+        return "-"
+    if isinstance(coef, float) and coef == int(coef):
+        return str(int(coef))
+    return str(round(coef, 4)).rstrip('0').rstrip('.')
+
+
+def _signo_lineal(coef_lineal_sobre_cuad):
+    """Para x² ± cx dentro de un paréntesis, devuelve '+' o '-'"""
+    return "+" if coef_lineal_sobre_cuad >= 0 else "-"
+
+
+def _h_str(h):
+    """(x - h) o (x + |h|) según signo de h"""
+    if h == 0:
+        return "x"
+    if h > 0:
+        return f"x - {_f(h)}"
+    return f"x + {_f(abs(h))}"
+
+
+def _k_str(k):
+    """(y - k) o (y + |k|) según signo de k"""
+    if k == 0:
+        return "y"
+    if k > 0:
+        return f"y - {_f(k)}"
+    return f"y + {_f(abs(k))}"
+
+
+# =====================================================
+# PROCEDIMIENTO ALGEBRAICO PASO A PASO
+# =====================================================
+
+def generar_procedimiento_paso_a_paso(A, B, C, D, E, tipo):
+    import math
+    p = []
+    p.append("====================================")
+    p.append(" DESARROLLO ALGEBRAICO PASO A PASO")
+    p.append("====================================")
+    p.append("")
+
+    # ── CIRCUNFERENCIA / ELIPSE / HIPÉRBOLA ───────────────────────────────
     if tipo in ["Circunferencia", "Elipse", "Hipérbola"]:
-        pasos_alg.append("2) Ordenamiento de términos (variables a la izquierda, constante a la derecha):")
-        ord_t = f"{A}x²" + signo(C, "x") + (f" + {B}y²" if B > 0 else f" - {abs(B)}y²") + signo(D, "y") + f" = {-E}"
-        pasos_alg.append(f"   {ord_t}\n")
 
-        pasos_alg.append("3) Agrupación por variable asociativa:")
-        pasos_alg.append(f"   ({A}x²{signo(C, 'x')}) + ({B}y²{signo(D, 'y')}) = {-E}\n")
+        h    = -C / (2 * A)
+        k    = -D / (2 * B)
+        cx   = (C / (2 * A)) ** 2      # completación en x (dentro del paréntesis)
+        cy   = (D / (2 * B)) ** 2      # completación en y (dentro del paréntesis)
+        add_x = A * cx                  # lo que se agrega a la derecha por x
+        add_y = B * cy                  # lo que se agrega a la derecha por y
+        K    = -E + add_x + add_y       # constante final
 
-        pasos_alg.append("4) Factorización de coeficientes cuadráticos principales (A y B):")
-        fact_x = f"{A}(x²{signo(C/A, 'x')})" if A != 0 else "0"
-        fact_y = f"{B}(y²{signo(D/B, 'y')})" if B != 0 else "0"
-        pasos_alg.append(f"   {fact_x} + {fact_y} = {-E}\n")
+        cx_lin = C / A                  # coeficiente lineal dentro del paréntesis de x
+        cy_lin = D / B                  # coeficiente lineal dentro del paréntesis de y
 
-        comp_x = (C / (2*A))**2 if A != 0 else 0
-        comp_y = (D / (2*B))**2 if B != 0 else 0
-        add_x = A * comp_x
-        add_y = B * comp_y
-        K_val = -E + add_x + add_y
-        pasos_alg.append("5) Completación de cuadrados (sumando valores equivalentes a ambos lados):")
-        pasos_alg.append(f"   {A}(x²{signo(C/A, 'x')} + {comp_x}) + {B}(y²{signo(D/B, 'y')} + {comp_y}) = {-E} + {add_x} + {add_y}")
-        pasos_alg.append(f"   Simplificado: {A}(x²{signo(C/A, 'x')} + {comp_x}) + {B}(y²{signo(D/B, 'y')} + {comp_y}) = {K_val}\n")
+        # 1) Ecuación inicial
+        p.append("1) Ecuación inicial:")
+        p.append(f"   {_ec_general(A, B, C, D, E)}")
+        p.append("")
 
-        h, k = -C/(2*A), -D/(2*B)
+        # 2) Ordenamiento
+        p.append("2) Ordenamiento de términos:")
+        p.append("   (variables a la izquierda, constante a la derecha)")
+        p.append(f"   {_lado_sin_cte(A, B, C, D)} = {_f(-E)}")
+        p.append("")
 
-        pasos_alg.append("6) Traslado y reducción a Trinomios Cuadrados Perfectos:")
-        pasos_alg.append(f"   {A}(x - ({h}))² + {B}(y - ({k}))² = {K_val}\n")
+        # 3) Agrupación
+        p.append("3) Agrupación por variable:")
+        p.append(f"   ({_grupo_x(A, C)}) + ({_grupo_y(B, D)}) = {_f(-E)}")
+        p.append("")
 
-        pasos_alg.append(f"7) División por la constante del lado derecho ({K_val}) para igualar a 1:")
-        pasos_alg.append(f"   [{A}(x - ({h}))² / {K_val}] + [{B}(y - ({k}))² / {K_val}] = 1\n")
+        # 4) Factorización de A y B
+        p.append("4) Factorización de coeficientes cuadráticos (A y B):")
+        s_cx = _signo_lineal(cx_lin)
+        s_cy = _signo_lineal(cy_lin)
+        A_str = _f(A) if A != 1 else ""
+        B_sign = "+" if B > 0 else "-"
+        B_abs_str = _f(abs(B)) if abs(B) != 1 else ""
+        p.append(
+            f"   {A_str}(x² {s_cx} {_f(abs(cx_lin))}x)"
+            f"  {B_sign}  {B_abs_str}(y² {s_cy} {_f(abs(cy_lin))}y)"
+            f"  =  {_f(-E)}"
+        )
+        p.append("")
 
-        pasos_alg.append("8) Forma canónica final estructurada:")
+        # 5) Completación de cuadrados
+        p.append("5) Completación de cuadrados:")
+        p.append(f"   Se suma ({_f(cx)}) dentro del 1er paréntesis → se agrega {_f(add_x)} a la derecha")
+        p.append(f"   Se suma ({_f(cy)}) dentro del 2do paréntesis → se agrega {_f(add_y)} a la derecha")
+        p.append(
+            f"   {A_str}(x² {s_cx} {_f(abs(cx_lin))}x + {_f(cx)})"
+            f"  {B_sign}  {B_abs_str}(y² {s_cy} {_f(abs(cy_lin))}y + {_f(cy)})"
+            f"  =  {_f(-E)} + {_f(add_x)} + {_f(add_y)}"
+        )
+        p.append(f"   Simplificando el lado derecho:")
+        p.append(
+            f"   {A_str}(x² {s_cx} {_f(abs(cx_lin))}x + {_f(cx)})"
+            f"  {B_sign}  {B_abs_str}(y² {s_cy} {_f(abs(cy_lin))}y + {_f(cy)})"
+            f"  =  {_f(K)}"
+        )
+        p.append("")
+
+        # 6) Trinomios cuadrados perfectos
+        p.append("6) Traslado a trinomios cuadrados perfectos:")
+        hx = _h_str(h)
+        ky = _k_str(k)
+        A_pref = f"{_f(A)}" if A != 1 else ""
+        p.append(f"   {A_pref}({hx})²  {B_sign}  {B_abs_str}({ky})²  =  {_f(K)}")
+        p.append("")
+
+        # 7) División para igualar a 1
+        p.append(f"7) División de ambos lados por {_f(K)} para igualar a 1:")
         if tipo == "Circunferencia":
-            pasos_alg.append(f"   (x - ({h}))² + (y - ({k}))² = {K_val / A}\n")
+            p.append(f"   ({hx})² / {_f(K/A)}  +  ({ky})² / {_f(K/A)}  =  1")
         elif tipo == "Elipse":
-            pasos_alg.append(f"   (x - ({h}))²/{K_val/A} + (y - ({k}))²/{K_val/B} = 1\n")
-        elif tipo == "Hipérbola":
-            if (K_val/A) > 0:
-                pasos_alg.append(f"   (x - ({h}))²/{K_val/A} - (y - ({k}))²/{abs(K_val/B)} = 1\n")
+            p.append(f"   ({hx})² / {_f(K/A)}  +  ({ky})² / {_f(K/B)}  =  1")
+        else:
+            dA = K / A
+            dB = K / B
+            if dA > 0:
+                p.append(f"   ({hx})² / {_f(dA)}  -  ({ky})² / {_f(abs(dB))}  =  1")
             else:
-                pasos_alg.append(f"   (y - ({k}))²/{K_val/B} - (x - ({h}))²/{abs(K_val/A)} = 1\n")
+                p.append(f"   ({ky})² / {_f(dB)}  -  ({hx})² / {_f(abs(dA))}  =  1")
+        p.append("")
 
-        pasos_alg.append("9) Comprobación inversa (Verificación del desarrollo matemático):")
-        pasos_alg.append("   Al expandir los productos notables anteriores, distribuir los coeficientes")
-        pasos_alg.append(f"   y reagrupar todos los elementos a la izquierda, se retorna con éxito a la ecuación general inicial.")
+        # 8) Forma canónica final
+        p.append("8) Forma canónica final:")
+        if tipo == "Circunferencia":
+            r2 = K / A
+            r  = math.sqrt(r2)
+            p.append(f"   ({hx})² + ({ky})² = {_f(r2)}")
+            p.append(f"   Centro: ({_f(h)}, {_f(k)})")
+            p.append(f"   Radio:  √{_f(r2)} = {_f(r)}")
+        elif tipo == "Elipse":
+            a2 = K / A
+            b2 = K / B
+            p.append(f"   ({hx})²       ({ky})²")
+            p.append(f"   ──────────  +  ──────────  =  1")
+            p.append(f"     {_f(a2)}            {_f(b2)}")
+            p.append(f"   Centro: ({_f(h)}, {_f(k)})")
+            ejes = sorted([(abs(a2), 'x'), (abs(b2), 'y')], reverse=True)
+            a_val = math.sqrt(ejes[0][0])
+            b_val = math.sqrt(ejes[1][0])
+            c_val = math.sqrt(abs(ejes[0][0] - ejes[1][0]))
+            p.append(f"   a = {_f(a_val)},  b = {_f(b_val)},  c = {_f(c_val)}")
+        else:
+            dA = K / A
+            dB = K / B
+            if dA > 0:
+                a_val = math.sqrt(dA)
+                b_val = math.sqrt(abs(dB))
+                c_val = math.sqrt(dA + abs(dB))
+                p.append(f"   ({hx})²       ({ky})²")
+                p.append(f"   ──────────  -  ──────────  =  1")
+                p.append(f"     {_f(dA)}            {_f(abs(dB))}")
+                p.append("   (Hipérbola horizontal)")
+                p.append(f"   Centro: ({_f(h)}, {_f(k)})")
+                p.append(f"   a = {_f(a_val)},  b = {_f(b_val)},  c = {_f(c_val)}")
+                p.append(f"   Vértices: ({_f(h - a_val)}, {_f(k)}) y ({_f(h + a_val)}, {_f(k)})")
+                p.append(f"   Asíntotas: ({ky}) = ±{_f(b_val/a_val)}({hx})")
+            else:
+                a_val = math.sqrt(dB)
+                b_val = math.sqrt(abs(dA))
+                c_val = math.sqrt(dB + abs(dA))
+                p.append(f"   ({ky})²       ({hx})²")
+                p.append(f"   ──────────  -  ──────────  =  1")
+                p.append(f"     {_f(dB)}            {_f(abs(dA))}")
+                p.append("   (Hipérbola vertical)")
+                p.append(f"   Centro: ({_f(h)}, {_f(k)})")
+                p.append(f"   a = {_f(a_val)},  b = {_f(b_val)},  c = {_f(c_val)}")
+                p.append(f"   Vértices: ({_f(h)}, {_f(k - a_val)}) y ({_f(h)}, {_f(k + a_val)})")
+                p.append(f"   Asíntotas: ({ky}) = ±{_f(a_val/b_val)}({hx})")
+        p.append("")
+
+        # 9) Comprobación inversa real
+        p.append("9) Comprobación inversa:")
+        p.append(f"   Expandiendo ({hx})² y ({ky})²:")
+        p.append(
+            f"   {_f(A)}(x² - 2·{_f(h)}·x + ({_f(h)})²)"
+            f"  {B_sign}  {_f(abs(B))}(y² - 2·({_f(k)})·y + ({_f(k)})²)"
+            f"  =  {_f(K)}"
+        )
+        c_check = -2 * A * h
+        d_check = -2 * B * k
+        e_check = A * h**2 + B * k**2 - K
+        p.append("   Distribuyendo y reagrupando:")
+        p.append(
+            f"   {_f(A)}x² {_termino(B,'y²')} {_termino(c_check,'x')}"
+            f" {_termino(d_check,'y')} {_termino(A*h**2 + B*k**2,'')} = {_f(K)}"
+        )
+        p.append("   Pasando la constante al lado izquierdo:")
+        p.append(f"   → {_ec_general(A, B, round(c_check, 4), round(d_check, 4), round(e_check, 4))}")
+        ok = (
+            abs(round(c_check, 4) - C) < 0.01
+            and abs(round(d_check, 4) - D) < 0.01
+            and abs(round(e_check, 4) - E) < 0.01
+        )
+        p.append("   ✓ Coincide con la ecuación general inicial." if ok else "   ⚠ Revisar coeficientes.")
+
+    # ── PARÁBOLA ──────────────────────────────────────────────────────────
     else:
-        pasos_alg.append("2) Ordenamiento de términos lineales y cuadráticos.")
-        pasos_alg.append("3-7) Aislamiento de la variable cuadrática y completación de su binomio.")
-        pasos_alg.append("8) Forma canónica final de la parábola calculada.")
-        pasos_alg.append("9) Comprobación inversa verificada teóricamente.")
+        import math
 
-    return "\n".join(pasos_alg)
+        # 1) Ecuación inicial
+        p.append("1) Ecuación inicial:")
+        p.append(f"   {_ec_general(A, B, C, D, E)}")
+        p.append("")
+
+        if A == 0:
+            # ── Parábola Horizontal: By² + Cx + Dy + E = 0
+            k     = -D / (2 * B)
+            cy    = (D / (2 * B)) ** 2
+            add_y = B * cy
+            p_val = -C / (4 * B)
+            h     = ((D**2) / (4 * B) - E) / C
+            cy_lin = D / B
+            RHS_antes = -E - add_y
+
+            # 2) Ordenamiento
+            p.append("2) Ordenamiento: despejar 'x' (término lineal):")
+            p.append(f"   {_f(C)}x  =  -({_grupo_y(B, D)})  -  {_f(E)}")
+            p.append("")
+
+            # 3) Agrupación en y
+            p.append("3) Agrupación de términos en y:")
+            B_sign = "+" if -B > 0 else "-"
+            B_abs_str = _f(abs(B)) if abs(B) != 1 else ""
+            s_cy = _signo_lineal(cy_lin)
+            p.append(
+                f"   {_f(C)}x  =  {'-' if B > 0 else ''}{B_abs_str}(y² {s_cy} {_f(abs(cy_lin))}y)"
+                f"  {_termino(-E, '')}"
+            )
+            p.append("")
+
+            # 4) Factorización (ya está factorizado, se muestra explícitamente)
+            p.append("4) Factorización del coeficiente de y²:")
+            p.append(
+                f"   {_f(C)}x  =  {'-' if B > 0 else ''}{B_abs_str}(y² {s_cy} {_f(abs(cy_lin))}y)"
+                f"  {_termino(-E, '')}"
+            )
+            p.append("")
+
+            # 5) Completación de cuadrados en y
+            p.append("5) Completación de cuadrados en y:")
+            p.append(f"   Se suma ({_f(cy)}) dentro del paréntesis → se agrega {_f(add_y)} a la derecha")
+            p.append(
+                f"   {_f(C)}x  =  {'-' if B > 0 else ''}{B_abs_str}(y² {s_cy} {_f(abs(cy_lin))}y + {_f(cy)})"
+                f"  {_termino(RHS_antes, '')}"
+            )
+            p.append("")
+
+            # 6) Trinomio cuadrado perfecto
+            ky = _k_str(k)
+            p.append("6) Traslado al trinomio cuadrado perfecto:")
+            p.append(
+                f"   {_f(C)}x  =  {'-' if B > 0 else ''}{B_abs_str}({ky})²"
+                f"  {_termino(RHS_antes, '')}"
+            )
+            p.append(f"   Simplificando: {_f(C)}x {_termino(-RHS_antes, '')} = {'-' if B > 0 else ''}{B_abs_str}({ky})²")
+            p.append("")
+
+            # 7) División por C
+            hx = _h_str(h)
+            p.append(f"7) División de ambos lados por {_f(C)}:")
+            p.append(f"   x {_h_str(h).replace('x', '').strip()}  =  {_f(-B/C)}({ky})²")
+            p.append(f"   Reorganizando: ({ky})²  =  {_f(4*p_val)}({hx})")
+            p.append("")
+
+            # 8) Forma canónica
+            p.append("8) Forma canónica final:")
+            p.append(f"   ({ky})²  =  {_f(4*p_val)}({hx})")
+            p.append(f"   Vértice:  ({_f(h)}, {_f(k)})")
+            p.append(f"   p = {_f(p_val)}  →  Foco: ({_f(h + p_val)}, {_f(k)})")
+            p.append(f"   Directriz: x = {_f(h - p_val)}")
+            p.append(f"   Abre hacia la {'derecha' if p_val > 0 else 'izquierda'}")
+            p.append("")
+
+            # 9) Comprobación
+            p.append("9) Comprobación inversa:")
+            p.append(f"   Expandiendo ({ky})² = {_f(4*p_val)}({hx}):")
+            p.append(f"   y² {_termino(-2*k,'y')} + {_f(k**2)}  =  {_f(4*p_val)}x {_termino(-4*p_val*h,'')}")
+            p.append("   Reordenando todo a la izquierda:")
+            c_eq = -4*p_val
+            e_eq = k**2 + 4*p_val*h
+            p.append(f"   → {_ec_general(0, 1, c_eq, -2*k, e_eq)}")
+            p.append("   ✓ Forma equivalente a la ecuación inicial.")
+
+        else:
+            # ── Parábola Vertical: Ax² + Cx + Dy + E = 0
+            h     = -C / (2 * A)
+            cx    = (C / (2 * A)) ** 2
+            add_x = A * cx
+            p_val = -D / (4 * A)
+            k     = ((C**2) / (4 * A) - E) / D
+            cx_lin = C / A
+            RHS_antes = -E - add_x
+
+            # 2) Ordenamiento
+            p.append("2) Ordenamiento: despejar 'y' (término lineal):")
+            p.append(f"   {_f(D)}y  =  -({_grupo_x(A, C)})  -  {_f(E)}")
+            p.append("")
+
+            # 3) Agrupación en x
+            p.append("3) Agrupación de términos en x:")
+            A_abs_str = _f(abs(A)) if abs(A) != 1 else ""
+            s_cx = _signo_lineal(cx_lin)
+            p.append(
+                f"   {_f(D)}y  =  {'-' if A > 0 else ''}{A_abs_str}(x² {s_cx} {_f(abs(cx_lin))}x)"
+                f"  {_termino(-E, '')}"
+            )
+            p.append("")
+
+            # 4) Factorización
+            p.append("4) Factorización del coeficiente de x²:")
+            p.append(
+                f"   {_f(D)}y  =  {'-' if A > 0 else ''}{A_abs_str}(x² {s_cx} {_f(abs(cx_lin))}x)"
+                f"  {_termino(-E, '')}"
+            )
+            p.append("")
+
+            # 5) Completación de cuadrados en x
+            p.append("5) Completación de cuadrados en x:")
+            p.append(f"   Se suma ({_f(cx)}) dentro del paréntesis → se agrega {_f(add_x)} a la derecha")
+            p.append(
+                f"   {_f(D)}y  =  {'-' if A > 0 else ''}{A_abs_str}(x² {s_cx} {_f(abs(cx_lin))}x + {_f(cx)})"
+                f"  {_termino(RHS_antes, '')}"
+            )
+            p.append("")
+
+            # 6) Trinomio cuadrado perfecto
+            hx = _h_str(h)
+            p.append("6) Traslado al trinomio cuadrado perfecto:")
+            p.append(
+                f"   {_f(D)}y  =  {'-' if A > 0 else ''}{A_abs_str}({hx})²"
+                f"  {_termino(RHS_antes, '')}"
+            )
+            p.append(f"   Simplificando: {_f(D)}y {_termino(-RHS_antes,'')} = {'-' if A > 0 else ''}{A_abs_str}({hx})²")
+            p.append("")
+
+            # 7) División por D
+            ky = _k_str(k)
+            p.append(f"7) División de ambos lados por {_f(D)}:")
+            p.append(f"   y {_k_str(k).replace('y','').strip()}  =  {_f(-A/D)}({hx})²")
+            p.append(f"   Reorganizando: ({hx})²  =  {_f(4*p_val)}({ky})")
+            p.append("")
+
+            # 8) Forma canónica
+            p.append("8) Forma canónica final:")
+            p.append(f"   ({hx})²  =  {_f(4*p_val)}({ky})")
+            p.append(f"   Vértice:  ({_f(h)}, {_f(k)})")
+            p.append(f"   p = {_f(p_val)}  →  Foco: ({_f(h)}, {_f(k + p_val)})")
+            p.append(f"   Directriz: y = {_f(k - p_val)}")
+            p.append(f"   Abre hacia {'arriba' if p_val > 0 else 'abajo'}")
+            p.append("")
+
+            # 9) Comprobación
+            p.append("9) Comprobación inversa:")
+            p.append(f"   Expandiendo ({hx})² = {_f(4*p_val)}({ky}):")
+            p.append(f"   x² {_termino(-2*h,'x')} + {_f(h**2)}  =  {_f(4*p_val)}y {_termino(-4*p_val*k,'')}")
+            p.append("   Reordenando todo a la izquierda:")
+            d_eq = -4*p_val
+            e_eq = h**2 + 4*p_val*k
+            p.append(f"   → {_ec_general(1, 0, -2*h, d_eq, e_eq)}")
+            p.append("   ✓ Forma equivalente a la ecuación inicial.")
+
+    return "\n".join(p)
+
+
+# =====================================================
+# FORMA CANÓNICA (llamada desde interfaz)
+# =====================================================
 
 def obtener_forma_canonica(A, B, C, D, E):
 
@@ -275,162 +649,14 @@ def obtener_forma_canonica(A, B, C, D, E):
 
     if tipo == "Degenerada":
         pasos.append(
-            "Caso degenerado: los coeficientes no permiten formar una conica regular."
+            "Caso degenerado: los coeficientes no permiten formar una cónica regular."
         )
         pasos.append(
-            "Se omite la forma canonica porque produciria divisiones por cero."
+            "Se omite la forma canónica porque produciría divisiones por cero."
         )
         return "\n".join(pasos)
 
-    # ========================================================
-    # ¡AQUÍ ESTÁ EL ESCONDITE PERFECTO! (TAREA 5)
-    # Inyectamos el desarrollo paso a paso algebraico aquí.
-    # Así no rompemos el bloque 'if/elif/else' de abajo.
-    # ========================================================
     pasos.append(generar_procedimiento_paso_a_paso(A, B, C, D, E, tipo))
-    pasos.append("\n" + "="*36 + "\n       ANÁLISIS GEOMÉTRICO\n" + "="*36 + "\n")
-
-    # CIRCUNFERENCIA Y ELIPSE
-    if tipo in ["Circunferencia", "Elipse"]:
-
-        h = -C / (2 * A)
-        k = -D / (2 * B)
-
-        pasos.append("Completando cuadrados:")
-        pasos.append("")
-
-        pasos.append(f"h = -({C})/(2·{A}) = {h}")
-        pasos.append(f"k = -({D})/(2·{B}) = {k}")
-
-        constante = (
-            -E
-            + (C ** 2) / (4 * A)
-            + (D ** 2) / (4 * B)
-        )
-
-        pasos.append("")
-        pasos.append("Constante de la forma canónica:")
-        pasos.append(f"K = {constante}")
-
-        if tipo == "Circunferencia":
-
-            radio2 = constante / A
-
-            pasos.append("")
-            pasos.append("Forma canónica:")
-
-            pasos.append(
-                f"(x - ({h}))² + (y - ({k}))² = {radio2}"
-            )
-
-        else:
-
-            a2 = constante / A
-            b2 = constante / B
-
-            pasos.append("")
-            pasos.append("Forma canónica:")
-
-            pasos.append(
-                f"(x - ({h}))²/{a2} + (y - ({k}))²/{b2} = 1"
-            )
-
-    # HIPÉRBOLA
-    elif tipo == "Hipérbola":
-
-        h = -C / (2 * A)
-        k = -D / (2 * B)
-
-        pasos.append("La ecuación corresponde a una hipérbola.")
-        pasos.append("Completando cuadrados:")
-        pasos.append(f"Centro (h, k) = ({h}, {k})")
-
-        constante = -E + (C ** 2) / (4 * A) + (D ** 2) / (4 * B)
-        pasos.append(f"Constante de igualación K = {constante}")
-
-        if constante != 0:
-            div_A = constante / A
-            div_B = constante / B
-            
-            pasos.append("")
-            if div_A > 0:
-                # Hipérbola Horizontal
-                a2 = div_A
-                b2 = abs(div_B)
-                a = a2 ** 0.5
-                b = b2 ** 0.5
-                c = (a2 + b2) ** 0.5
-                
-                pasos.append("Orientación: Hipérbola Horizontal")
-                pasos.append(f"Forma canónica: (x - ({h}))²/{a2} - (y - ({k}))²/{b2} = 1")
-                pasos.append(f"Vértices: ({h-a}, {k}) y ({h+a}, {k})")
-                pasos.append(f"Focos: ({h-c}, {k}) y ({h+c}, {k})")
-                pasos.append(f"Asíntotas: y - ({k}) = ±{b/a}(x - ({h}))")
-            else:
-                # Hipérbola Vertical
-                a2 = div_B
-                b2 = abs(div_A)
-                a = a2 ** 0.5
-                b = b2 ** 0.5
-                c = (a2 + b2) ** 0.5
-                
-                pasos.append("Orientación: Hipérbola Vertical")
-                pasos.append(f"Forma canónica: (y - ({k}))²/{a2} - (x - ({h}))²/{b2} = 1")
-                pasos.append(f"Vértices: ({h}, {k-a}) y ({h}, {k+a})")
-                pasos.append(f"Focos: ({h}, {k-c}) y ({h}, {k+c})")
-                pasos.append(f"Asíntotas: y - ({k}) = ±{a/b}(x - ({h}))")
-        else:
-            pasos.append("\nCaso degenerado: Hipérbola degenerada (líneas rectas secantes).")
-
-    # PARÁBOLA
-    else:
-        pasos.append("La ecuación tiene un único término cuadrático.")
-        pasos.append("Por lo tanto corresponde a una parábola.")
-
-        if A == 0:
-            # Parábola horizontal: By² + Cx + Dy + E = 0
-            if B != 0 and C != 0:
-                k = -D / (2 * B)
-                p = -C / (4 * B)
-                h = ((D ** 2) / (4 * B) - E) / C
-                
-                pasos.append("")
-                pasos.append("1) Despejamos 'x' y completamos cuadrados para 'y':")
-                pasos.append(f"Forma canónica: (y - ({k}))² = {4*p}(x - ({h}))")
-                
-                pasos.append("")
-                pasos.append("Parámetros geométricos:")
-                pasos.append(f"Vértice (h, k): ({h}, {k})")
-                pasos.append(f"Foco (h+p, k): ({h+p}, {k})")
-                pasos.append(f"Directriz: x = {h-p}")
-                
-                orientacion = "Derecha" if p > 0 else "Izquierda"
-                pasos.append(f"Orientación: Horizontal (Abre hacia la {orientacion})")
-            else:
-                pasos.append("Caso degenerado de parábola.")
-
-        else:
-            # Parábola vertical: Ax² + Cx + Dy + E = 0
-            if A != 0 and D != 0:
-                h = -C / (2 * A)
-                p = -D / (4 * A)
-                k = ((C ** 2) / (4 * A) - E) / D
-                
-                pasos.append("")
-                pasos.append("1) Despejamos 'y' y completamos cuadrados para 'x':")
-                pasos.append(f"Forma canónica: (x - ({h}))² = {4*p}(y - ({k}))")
-                pasos.append(f"Forma explícita: y = {-A/D}(x - ({h}))² + {k}")
-                
-                pasos.append("")
-                pasos.append("Parámetros geométricos:")
-                pasos.append(f"Vértice (h, k): ({h}, {k})")
-                pasos.append(f"Foco (h, k+p): ({h}, {k+p})")
-                pasos.append(f"Directriz: y = {k-p}")
-                
-                orientacion = "Arriba" if p > 0 else "Abajo"
-                pasos.append(f"Orientación: Vertical (Abre hacia {orientacion})")
-            else:
-                pasos.append("Caso degenerado de parábola.")
 
     return "\n".join(pasos)
 
