@@ -161,114 +161,69 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
         h = -C/(2*A)
         k = -D/(2*B)
 
-        constante = (
-            -E
-            + (C**2)/(4*A)
-            + (D**2)/(4*B)
-        )
+        K = (C**2)/(4*A) + (D**2)/(4*B) - E
 
-        a2 = abs(constante / A)
-        b2 = abs(constante / B)
-
-        a = np.sqrt(a2)
-        b = np.sqrt(b2)
-
-        if a == 0 or b == 0:
+        if K == 0:
             mostrar_caso_degenerado(ax)
             ax.set_xlim(-20,20)
             ax.set_ylim(-20,20)
             return fig
 
-        ax.plot(
-            h,
-            k,
-            marker="o"
-        )
-
-        ax.annotate(
-            f"Centro ({round(h,2)}, {round(k,2)})",
-            (h, k)
-        )
-
-        x = np.linspace(
-            h - 20,
-            h + 20,
-            4000
-        )
-
-        if A > 0:
-
-            parte = ((x-h)**2)/a2 - 1
-
-            y1 = []
-            y2 = []
-
-            for valor in parte:
-
-                if valor >= 0:
-
-                    y = np.sqrt(valor*b2)
-
-                    y1.append(k+y)
-                    y2.append(k-y)
-
-                else:
-
-                    y1.append(np.nan)
-                    y2.append(np.nan)
-
-            ax.plot(x, y1)
-            ax.plot(x, y2)
+        div_A = K / A
+        div_B = K / B
+        
+        t = np.linspace(-2.5, 2.5, 500)
+        
+        # --- HIPÉRBOLA HORIZONTAL ---
+        if div_A > 0:
+            a = np.sqrt(div_A)
+            b = np.sqrt(abs(div_B))
+            
+            # Ramas
+            x_der = h + a * np.cosh(t)
+            y_der = k + b * np.sinh(t)
+            x_izq = h - a * np.cosh(t)
+            y_izq = k + b * np.sinh(t)
+            
+            ax.plot(x_der, y_der, color="blue")
+            ax.plot(x_izq, y_izq, color="blue")
 
             # Asíntotas
+            x_asint = np.linspace(h - 20, h + 20, 100)
+            ax.plot(x_asint, (b/a)*(x_asint - h) + k, color="red", linestyle="--", alpha=0.6)
+            ax.plot(x_asint, -(b/a)*(x_asint - h) + k, color="red", linestyle="--", alpha=0.6)
+            
+            # Vértices y Focos
+            c = np.sqrt(a**2 + b**2)
+            ax.plot([h-a, h+a], [k, k], 'o', color="blue", markersize=4)
+            ax.plot([h-c, h+c], [k, k], 'x', color="black", markersize=6)
 
-            m = b/a
-
-            xa = np.array([h-20, h+20])
-
-            ax.plot(
-                xa,
-                m*(xa-h)+k,
-                linestyle="--"
-            )
-
-            ax.plot(
-                xa,
-                -m*(xa-h)+k,
-                linestyle="--"
-            )
-
+        # --- HIPÉRBOLA VERTICAL ---
         else:
+            a = np.sqrt(div_B)
+            b = np.sqrt(abs(div_A))
+            
+            # Ramas (Se invierten el cosh y sinh hacia el eje Y)
+            x_sup = h + b * np.sinh(t)
+            y_sup = k + a * np.cosh(t)
+            x_inf = h + b * np.sinh(t)
+            y_inf = k - a * np.cosh(t)
+            
+            ax.plot(x_sup, y_sup, color="blue")
+            ax.plot(x_inf, y_inf, color="blue")
 
-            y = np.linspace(
-                k-20,
-                k+20,
-                4000
-            )
+            # Asíntotas
+            x_asint = np.linspace(h - 20, h + 20, 100)
+            ax.plot(x_asint, (a/b)*(x_asint - h) + k, color="red", linestyle="--", alpha=0.6)
+            ax.plot(x_asint, -(a/b)*(x_asint - h) + k, color="red", linestyle="--", alpha=0.6)
 
-            parte = ((y-k)**2)/a2 - 1
+            # Vértices y Focos
+            c = np.sqrt(a**2 + b**2)
+            ax.plot([h, h], [k-a, k+a], 'o', color="blue", markersize=4)
+            ax.plot([h, h], [k-c, k+c], 'x', color="black", markersize=6)
 
-            x1 = []
-            x2 = []
-
-            for valor in parte:
-
-                if valor >= 0:
-
-                    xx = np.sqrt(valor*b2)
-
-                    x1.append(h+xx)
-                    x2.append(h-xx)
-
-                else:
-
-                    x1.append(np.nan)
-                    x2.append(np.nan)
-
-            ax.plot(x1, y)
-            ax.plot(x2, y)
-
-        ax.set_aspect("equal")
+        # Centro
+        ax.plot(h, k, marker="+", color="black", markersize=8)
 
     # =========================================
     # PARÁBOLA
