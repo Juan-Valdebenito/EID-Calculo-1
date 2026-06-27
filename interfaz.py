@@ -409,8 +409,7 @@ def construir_reporte_rut(rut_ingresado, valido, detalle):
     return (
         "RUT\n"
         "====================================\n"
-        "Ingreso\n"
-        f"{rut_ingresado}\n\n"
+        f"Ingreso: {rut_ingresado}\n\n"
         "Validacion\n"
         f"Estado: {estado}\n\n"
         "Procedimiento modulo 11\n"
@@ -422,16 +421,14 @@ def construir_reporte_conicas(A, B, C, D, E, procedimiento_conica, tipo):
     return (
         "CONICAS\n"
         "====================================\n"
-        "Ecuacion general\n"
-        f"{ecuacion_general(A, B, C, D, E)}\n\n"
+        f"Ecuacion general: {ecuacion_general(A, B, C, D, E)}\n\n"
         "Procedimiento\n"
         f"{procedimiento_conica}\n\n"
         "Forma canonica\n"
         f"{obtener_forma_canonica(A, B, C, D, E)}\n\n"
-        "Clasificacion\n"
-        f"{tipo}\n\n"
+        f"Clasificacion: {tipo}\n\n"
         "Grafica\n"
-        "Disponible en la pestaña Grafica > Conica.\n"
+        "Disponible en la pestana Grafica > Conica.\n"
     )
 
 
@@ -442,10 +439,9 @@ def construir_reporte_transformaciones(A, B, C, D, E):
         "Procedimiento\n"
         "Se transforma desde la ecuacion general completando cuadrados hasta llegar a la forma canonica.\n\n"
         f"{obtener_forma_canonica(A, B, C, D, E)}\n\n"
-        "Grafica original\n"
-        "Disponible en la pestaña Grafica > Original.\n\n"
-        "Grafica transformada\n"
-        "Disponible en la pestaña Grafica > Transformada.\n"
+        "Graficas\n"
+        "Original:     Disponible en la pestana Grafica > Original.\n"
+        "Transformada: Disponible en la pestana Grafica > Transformada.\n"
     )
 
 
@@ -490,7 +486,7 @@ def construir_reporte_limites(datos_funcion, resultado_limites, tabla_datos):
         "Evidencia computacional\n"
         f"{chr(10).join(evidencia)}\n\n"
         "Grafica\n"
-        "Disponible en la pestaña Grafica > Limites.\n\n"
+        "Disponible en la pestana Grafica > Limites.\n\n"
         "Conclusion\n"
         f"{conclusion}\n"
     )
@@ -658,10 +654,51 @@ def iniciar_app():
     tabla.column("y", width=120, anchor="center")
     tabla.pack(fill="both", expand=True, padx=10, pady=10)
 
-    escribir(texto_rut, "RUT\n====================================\nIngreso\nEsperando datos.\n\nValidacion\nPendiente.\n\nProcedimiento modulo 11\nPendiente.\n")
-    escribir(texto_conicas, "CONICAS\n====================================\nEcuacion general\nPendiente.\n\nProcedimiento\nPendiente.\n\nForma canonica\nPendiente.\n\nClasificacion\nPendiente.\n\nGrafica\nPendiente.\n")
-    escribir(texto_transformaciones, "TRANSFORMACIONES\n====================================\nProcedimiento\nPendiente.\n\nGrafica original\nPendiente.\n\nGrafica transformada\nPendiente.\n")
-    escribir(texto_limites, "LIMITES\n====================================\nConstruccion\nPendiente.\n\nLimites laterales\nPendiente.\n\nEvidencia computacional\nPendiente.\n\nGrafica\nPendiente.\n\nConclusion\nPendiente.\n")
+    # Textos iniciales de espera (sin duplicar encabezados)
+    escribir(texto_rut,
+        "RUT\n"
+        "====================================\n"
+        "Ingreso: (sin RUT)\n\n"
+        "Validacion\n"
+        "Estado: Pendiente.\n\n"
+        "Procedimiento modulo 11\n"
+        "Pendiente.\n"
+    )
+    escribir(texto_conicas,
+        "CONICAS\n"
+        "====================================\n"
+        "Ecuacion general: Pendiente.\n\n"
+        "Procedimiento\n"
+        "Pendiente.\n\n"
+        "Forma canonica\n"
+        "Pendiente.\n\n"
+        "Clasificacion: Pendiente.\n\n"
+        "Grafica\n"
+        "Pendiente.\n"
+    )
+    escribir(texto_transformaciones,
+        "TRANSFORMACIONES\n"
+        "====================================\n"
+        "Procedimiento\n"
+        "Pendiente.\n\n"
+        "Graficas\n"
+        "Original:     Pendiente.\n"
+        "Transformada: Pendiente.\n"
+    )
+    escribir(texto_limites,
+        "LIMITES\n"
+        "====================================\n"
+        "Construccion\n"
+        "Pendiente.\n\n"
+        "Limites laterales\n"
+        "Pendiente.\n\n"
+        "Evidencia computacional\n"
+        "Pendiente.\n\n"
+        "Grafica\n"
+        "Pendiente.\n\n"
+        "Conclusion\n"
+        "Pendiente.\n"
+    )
 
     mostrar_figura(tab_grafica_conica, figura_inicial("Esperando RUT"))
     mostrar_figura(tab_grafica_original, figura_inicial("Grafica original"))
