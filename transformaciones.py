@@ -271,7 +271,7 @@ def forma_canonica(A, B, C, D, E):
         texto.append(f"b² = {fmt(b2)}")
 
     # =====================================
-    # PARÁBOLA
+    # PARÁBOLA (Corregido con desplazamientos h y k)
     # =====================================
 
     else:
@@ -280,30 +280,54 @@ def forma_canonica(A, B, C, D, E):
         texto.append("")
 
         if A == 0:
+            
+            if B == 0 or C == 0:
+                texto.append("Caso degenerado de parábola.")
+                return "\n".join(texto)
 
+            # Ecuación: By² + Cx + Dy + E = 0
             k = -D / (2 * B)
+            p = -C / (4 * B)
+            
+            # ¡Aquí está la magia! Calculamos 'h' usando 'E'
+            h = ((D ** 2) / (4 * B) - E) / C
 
-            texto.append(
-                "Orientación horizontal"
-            )
-
+            texto.append("Orientación horizontal")
+            texto.append(f"Abre hacia la {'derecha' if p > 0 else 'izquierda'}")
             texto.append("")
-            texto.append(
-                f"Vértice aproximado = (0 , {fmt(k)})"
-            )
+            
+            texto.append(f"Vértice (h, k) = ({fmt(h)}, {fmt(k)})")
+            texto.append(f"Foco = ({fmt(h+p)}, {fmt(k)})")
+            texto.append(f"Directriz: x = {fmt(h-p)}")
+            texto.append("")
+            
+            texto.append("Forma canónica:")
+            texto.append(f"(y - ({fmt(k)}))² = {fmt(4*p)}(x - ({fmt(h)}))")
 
         else:
+            
+            if A == 0 or D == 0:
+                texto.append("Caso degenerado de parábola.")
+                return "\n".join(texto)
 
+            # Ecuación: Ax² + Cx + Dy + E = 0
             h = -C / (2 * A)
+            p = -D / (4 * A)
+            
+            # ¡Aquí está la magia! Calculamos 'k' usando 'E'
+            k = ((C ** 2) / (4 * A) - E) / D
 
-            texto.append(
-                "Orientación vertical"
-            )
-
+            texto.append("Orientación vertical")
+            texto.append(f"Abre hacia {'arriba' if p > 0 else 'abajo'}")
             texto.append("")
-            texto.append(
-                f"Vértice aproximado = ({fmt(h)} , 0)"
-            )
+            
+            texto.append(f"Vértice (h, k) = ({fmt(h)}, {fmt(k)})")
+            texto.append(f"Foco = ({fmt(h)}, {fmt(k+p)})")
+            texto.append(f"Directriz: y = {fmt(k-p)}")
+            texto.append("")
+            
+            texto.append("Forma canónica:")
+            texto.append(f"(x - ({fmt(h)}))² = {fmt(4*p)}(y - ({fmt(k)}))")
 
     return "\n".join(texto)
 

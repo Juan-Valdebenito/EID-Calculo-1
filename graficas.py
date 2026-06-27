@@ -277,7 +277,7 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
     elif tipo == "parábola":
 
         if A == 0:
-
+            # Parábola Horizontal
             if B == 0 or C == 0:
                 mostrar_caso_degenerado(ax)
                 ax.set_xlim(-20,20)
@@ -285,8 +285,9 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
                 return fig
 
             k = -D/(2*B)
-
             p = -C/(4*B)
+            
+            h = ((D**2)/(4*B) - E) / C
 
             if p == 0:
                 mostrar_caso_degenerado(ax)
@@ -296,31 +297,20 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
 
             t = np.linspace(-20,20,1000)
 
-            x = (t**2)/(4*p)
+            x = (t**2)/(4*p) + h
             y = t + k
 
             ax.plot(x,y)
 
-            foco = (p,k)
+            foco = (h + p, k)
 
-            ax.plot(
-                foco[0],
-                foco[1],
-                marker="x"
-            )
+            ax.plot(foco[0], foco[1], marker="x")
+            ax.annotate("Foco", foco)
 
-            ax.annotate(
-                "Foco",
-                foco
-            )
-
-            ax.axvline(
-                -p,
-                linestyle="--"
-            )
+            ax.axvline(h - p, linestyle="--")
 
         else:
-
+            # Parábola Vertical
             if A == 0 or D == 0:
                 mostrar_caso_degenerado(ax)
                 ax.set_xlim(-20,20)
@@ -328,8 +318,9 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
                 return fig
 
             h = -C/(2*A)
-
             p = -D/(4*A)
+            
+            k = ((C**2)/(4*A) - E) / D
 
             if p == 0:
                 mostrar_caso_degenerado(ax)
@@ -340,27 +331,16 @@ def graficar_desde_ecuacion(tipo, A, B, C, D, E):
             t = np.linspace(-20,20,1000)
 
             x = t + h
-            y = (t**2)/(4*p)
+            y = (t**2)/(4*p) + k
 
             ax.plot(x,y)
 
-            foco = (h,p)
+            foco = (h, k + p)
 
-            ax.plot(
-                foco[0],
-                foco[1],
-                marker="x"
-            )
+            ax.plot(foco[0], foco[1], marker="x")
+            ax.annotate("Foco", foco)
 
-            ax.annotate(
-                "Foco",
-                foco
-            )
-
-            ax.axhline(
-                -p,
-                linestyle="--"
-            )
+            ax.axhline(k - p, linestyle="--")
 
     ax.set_xlim(-20,20)
     ax.set_ylim(-20,20)

@@ -4,13 +4,13 @@ from tkinter import ttk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from conica import clasificar_conica, construir_ecuacion_detallado
+from conica import clasificar_conica, construir_ecuacion_detallado, obtener_forma_canonica
 from evidencia import obtener_tabla
 from funciones import analizar_limites, construir_funcion
 from grafica_limites import graficar_funcion
 from graficas import graficar_desde_ecuacion
 from rut import calcular_v, obtener_digitos, validar_rut_detallado
-from transformaciones import ecuacion_general, forma_canonica, procedimiento_canonica_a_general
+from transformaciones import ecuacion_general, procedimiento_canonica_a_general
 
 
 # =====================================================
@@ -427,7 +427,7 @@ def construir_reporte_conicas(A, B, C, D, E, procedimiento_conica, tipo):
         "Procedimiento\n"
         f"{procedimiento_conica}\n\n"
         "Forma canonica\n"
-        f"{forma_canonica(A, B, C, D, E)}\n\n"
+        f"{obtener_forma_canonica(A, B, C, D, E)}\n\n"
         "Clasificacion\n"
         f"{tipo}\n\n"
         "Grafica\n"
@@ -441,7 +441,7 @@ def construir_reporte_transformaciones(A, B, C, D, E):
         "====================================\n"
         "Procedimiento\n"
         "Se transforma desde la ecuacion general completando cuadrados hasta llegar a la forma canonica.\n\n"
-        f"{forma_canonica(A, B, C, D, E)}\n\n"
+        f"{obtener_forma_canonica(A, B, C, D, E)}\n\n"
         "Grafica original\n"
         "Disponible en la pestaña Grafica > Original.\n\n"
         "Grafica transformada\n"
